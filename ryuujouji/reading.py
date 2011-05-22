@@ -3,70 +3,53 @@
 import cProfile
 import pstats
 import time
-import sys
-import os
-import re
-import tools
 import copy
-
 from sqlalchemy.sql import select, and_, or_
 
 import tools
 import db
 
-class Segment():
-    unit = None
-    reading = None
-    reading_id = None
-    info = None
-    index = 0
-    
-    def __init__(self, unit, reading, reading_id, index, info=''):
-        self.unit = unit
-        self.reading = reading
-        self.reading_id = reading_id
-        self.index = index
-        self.info = info
-
-indent = ''
 meta = db.get_meta()
 meta.reflect()
 reading_t = meta.tables['reading']
 word_t = meta.tables['word']
 solution_t = meta.tables['solution']
 segment_t = meta.tables['segment']
-
 r_engine = meta.bind
-def get_individual_readings(word, reading, segments=None, solutions=None):
+
+
+solutions = []
+def get_individual_readings(word, reading):
+    global solutions
+    solutions = []
+    return get_remaining_readings(word, reading)
+
+
+def get_remaining_readings(word, reading, segments=None):
     
-    if solutions == None: solutions = []
     if segments == None: segments = []
     
     if len(word) == 0:
         solutions.append(segments)
-
-    #for char in word:
-    if len(word) > 0:
+    else:
         char = word[0]
         if tools.is_kana(char):
             if len(reading) != 0:
                 if char == reading[0]:
-                    tmp_word = word[1:]
                     tmp_segments = copy.copy(segments)
                     tmp_segments.append([char, char, 0, 0, 'kana'])
-                    get_individual_readings(tmp_word, reading[1:], tmp_segments,
-                                            solutions)
+                    get_remaining_readings(word[1:], reading[1:], tmp_segments)
         else:
             s = select([reading_t.c['reading'], reading_t.c['has_okurigana']],
                        reading_t.c['character'] == char)
 
             char_readings = r_engine.execute(s).fetchall()
 
-            if char_readings == None:    #TODO: Handle non-kanji and non-kana characters
+            #TODO: Handle non-kanji and non-kana characters
+            if char_readings == None:
                 return None
 
             for cr in char_readings:
-
                 if cr.has_okurigana == True:
                     (r, s, o) = cr.reading.partition(".") #reading, separator, okurigana
 
@@ -75,10 +58,9 @@ def get_individual_readings(word, reading, segments=None, solutions=None):
                     ot = word[1:ol + 1] #the portion we want to test as okurigana
 
                     if r == reading[:rl] and ot == o:
-                        tmp_word = word[ol + 1:]
                         tmp_segments = copy.copy(segments)
                         tmp_segments.append([char+o, r+o, 0, 0, 'kanji (%s) with okurigana (%s)'% (r,o)])
-                        get_individual_readings(tmp_word, reading[ol + rl:], tmp_segments, solutions)
+                        get_remaining_readings(word[ol + 1:], reading[ol + rl:], tmp_segments)
                 else:
                     r = cr.reading
                     rl = len(r)
@@ -87,10 +69,9 @@ def get_individual_readings(word, reading, segments=None, solutions=None):
                         r = tools.kata_to_hira(r)
 
                     if reading.startswith(r):
-                        tmp_word = word[1:]
                         tmp_segments = copy.copy(segments)
                         tmp_segments.append([char, r, 0, 0, 'kanji'])
-                        get_individual_readings(tmp_word, reading[rl:], tmp_segments, solutions)
+                        get_remaining_readings(word[1:], reading[rl:], tmp_segments)
     return solutions
 
 solution_l = []
@@ -107,7 +88,7 @@ def fill_solutions():
 #        if i == 10000:
 #            break
 #       print "STARTING THIS WORD ==============>", word.keb, word.reb
-        solutions = get_individual_readings(word.keb, word.reb)
+        solutions = get_remaining_readings(word.keb, word.reb)
         for s in solutions:
             sol_id +=1
             solution_l.append({'id':sol_id, 'word_id':word.id})
