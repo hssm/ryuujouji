@@ -15,8 +15,8 @@ r_engine = None
 
 reading_t = Table('reading', r_meta,
                   Column('id', Integer, primary_key=True),
-                  Column('character', Unicode),
-                  Column('reading', Unicode),
+                  Column('character', Unicode, index=True),
+                  Column('reading', Unicode, index=True),
                   Column('type', String),
                   Column('affix', String),
                   Column('has_okurigana', Boolean, nullable=False))
