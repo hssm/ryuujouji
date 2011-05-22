@@ -94,15 +94,15 @@ def db_populate_kanji_readings():
                           'affix':affix,
                           'has_okurigana':has_oku})
 
-    s = select([kd_nanori])
-    nanori = kd_engine.execute(s)
-
-    for n in nanori:
-        reading_l.append({'character':n.character_literal,
-                          'reading':n.nanori,
-                           'type':'nanori',
-                           'affix':'none',
-                           'has_okurigana':False})
+#    s = select([kd_nanori])
+#    nanori = kd_engine.execute(s)
+#
+#    for n in nanori:
+#        reading_l.append({'character':n.character_literal,
+#                          'reading':n.nanori,
+#                           'type':'nanori',
+#                           'affix':'none',
+#                           'has_okurigana':False})
 
     r_engine.execute(reading_t.insert(), reading_l)
 
@@ -124,7 +124,7 @@ def db_populate_words():
     start = time.time()
 
     s = select([k_ele, r_ele],
-               k_ele.c['entry_ent_seq'] == r_ele.c['entry_ent_seq'])
+                k_ele.c['entry_ent_seq'] == r_ele.c['entry_ent_seq'])
     words = jd_engine.execute(s)
     
     for word in words:
