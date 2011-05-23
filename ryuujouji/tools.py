@@ -3,13 +3,13 @@
 #License: GPLv3; http://www.gnu.org/licenses/gpl.txt
 
 #Hiragana range is U+3041 to U+309F
-HIRAGANA_START = ord(unicode('ぁ'))
-HIRAGANA_END = ord(unicode('ゟ'))    
+HIRAGANA_START = ord(unicode(u'ぁ'))
+HIRAGANA_END = ord(unicode(u'ゟ'))    
 HIRAGANA_RANGE = range(HIRAGANA_START, HIRAGANA_END+1)
 
 #Katakana range is U+30A0 to U+30FF
-KATAKANA_START = ord(unicode('゠'))
-KATAKANA_END = ord(unicode('ヿ'))
+KATAKANA_START = ord(unicode(u'゠'))
+KATAKANA_END = ord(unicode(u'ヿ'))
 KATAKANA_RANGE = range(KATAKANA_START, KATAKANA_END+1)
 
 KANA_RANGE = range(HIRAGANA_START, KATAKANA_END+1)

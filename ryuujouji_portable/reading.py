@@ -4,6 +4,8 @@
 
 import tools
 import copy
+import os
+import codecs
 
 solutions = []
 def get_readings(word, reading):
@@ -12,7 +14,11 @@ def get_readings(word, reading):
     
     global solutions
     solutions = []
-    return min(get_remaining_readings(word, reading))
+    results = get_remaining_readings(word, reading)
+    if len(results) > 0:
+        return min(results)
+    else:
+        return []
 
 
 def get_remaining_readings(word, reading, segments=None):
@@ -77,15 +83,22 @@ def get_remaining_readings(word, reading, segments=None):
 
 def get_char_readings(char):
     readings = []
-    f = open('readings')
+    cur_dir = os.path.dirname(__file__)
+    f = codecs.open(os.path.join(cur_dir, 'readings'), encoding='utf-8')
+    
+    #flag to quit early
     in_kanji = False
     for reading in f:
         reading = reading.strip('\n')
         #kanji,sep,reading
         (k, s, r) = reading.partition(",")
+
         if k == char:
             in_kanji = True
-            readings.append(unicode(r))
+            readings.append(r)
+        else:
+            if in_kanji == True:
+                break
     
     return readings
     
