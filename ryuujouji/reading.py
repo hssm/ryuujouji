@@ -88,7 +88,7 @@ def fill_solutions():
 #        if i == 10000:
 #            break
 #       print "STARTING THIS WORD ==============>", word.keb, word.reb
-        solutions = get_remaining_readings(word.keb, word.reb)
+        solutions = get_individual_readings(word.keb, word.reb)
         for s in solutions:
             sol_id +=1
             solution_l.append({'id':sol_id, 'word_id':word.id})
