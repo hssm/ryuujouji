@@ -3,7 +3,7 @@ belongs to which Kanji character. This will allow more granular
 searching of words in dictionary applications (or any software that
 searches for Japanese words) by being able to search for "words that
 use this character AND this reading". The name ryuujouji (粒状字) comes
-from this goal, and it means "granular charactes".
+from this goal, and it means "granular characters".
 
 This is experimental software and doesn't work for a large number of
 cases. 
@@ -16,7 +16,7 @@ The main project directory (./ryuujouji/) will aim to build a database
 of solutions against the entries in JMdict. 
 
 For use in other software, feel free to copy the portable directory
-(./portable/) From reading.py, import the function get_readings.
+(./portable/). Just import the function get_readings from reading.py.
 The function is called with two arguments, the word and its reading,
 and returns a list. The list contains lists of size 2. The first
 element is the kanji, the second is the reading. See the test function
