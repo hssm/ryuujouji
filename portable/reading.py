@@ -71,7 +71,7 @@ def get_remaining_readings(word, reading, segments=None):
 
 def get_char_readings(char):
     readings = []
-    f = open('kanji_readings')
+    f = open('readings')
     in_kanji = False
     for reading in f:
         reading = reading.strip('\n')
