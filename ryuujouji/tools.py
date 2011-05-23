@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+#Copyright (C) 2011 Houssam Salem <ntsp.gm@gmail.com>
+#License: GPLv3; http://www.gnu.org/licenses/gpl.txt
 
 #Hiragana range is U+3041 to U+309F
 HIRAGANA_START = ord(unicode('ぁ'))

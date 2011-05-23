@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+#Copyright (C) 2011 Houssam Salem <ntsp.gm@gmail.com>
+#License: GPLv3; http://www.gnu.org/licenses/gpl.txt
+
 import os
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.sql import select, or_

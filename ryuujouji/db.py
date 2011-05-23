@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+#Copyright (C) 2011 Houssam Salem <ntsp.gm@gmail.com>
+#License: GPLv3; http://www.gnu.org/licenses/gpl.txt
+
 import os
 import time
 from sqlalchemy import create_engine, Table, Column, Unicode, \

@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
+#Copyright (C) 2011 Houssam Salem <ntsp.gm@gmail.com>
+#License: GPLv3; http://www.gnu.org/licenses/gpl.txt
+
 import tools
 import copy
 
 solutions = []
 def get_readings(word, reading):
+    """Returns a list of lists separating the word into portions of
+    [character, reading] pairs that form the word."""
+    
     global solutions
     solutions = []
     return min(get_remaining_readings(word, reading))
