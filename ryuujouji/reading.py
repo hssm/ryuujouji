@@ -21,10 +21,17 @@ r_engine = meta.bind
 
 
 solutions = []
-def get_individual_readings(word, reading):
+def get_readings(word, reading):
+    """Returns a list of lists separating the word into portions of
+    [character, reading] pairs that form the word."""
+    
     global solutions
     solutions = []
-    return get_remaining_readings(word, reading)
+    results = get_remaining_readings(word, reading)
+    if len(results) > 0:
+        return min(results, key=len)
+    else:
+        return []
 
 
 def get_remaining_readings(word, reading, segments=None):
@@ -42,7 +49,7 @@ def get_remaining_readings(word, reading, segments=None):
                     tmp_segments.append([char, char, 0, 0, 'kana'])
                     get_remaining_readings(word[1:], reading[1:], tmp_segments)
         else:
-            s = select([reading_t.c['reading'], reading_t.c['has_okurigana']],
+            s = select([reading_t],
                        reading_t.c['character'] == char)
 
             char_readings = r_engine.execute(s).fetchall()
@@ -61,7 +68,7 @@ def get_remaining_readings(word, reading, segments=None):
 
                     if r == reading[:rl] and ot == o:
                         tmp_segments = copy.copy(segments)
-                        tmp_segments.append([char+o, r+o, 0, 0, 'kanji (%s) with okurigana (%s)'% (r,o)])
+                        tmp_segments.append([char+o, r+o, cr.id, 0, 'kanji (%s) with okurigana (%s)'% (r,o)])
                         get_remaining_readings(word[ol + 1:], reading[ol + rl:], tmp_segments)
                 else:
                     r = cr.reading
@@ -72,7 +79,7 @@ def get_remaining_readings(word, reading, segments=None):
 
                     if reading.startswith(r):
                         tmp_segments = copy.copy(segments)
-                        tmp_segments.append([char, r, 0, 0, 'kanji'])
+                        tmp_segments.append([char, r, cr.id, 0, 'kanji'])
                         get_remaining_readings(word[1:], reading[rl:], tmp_segments)
     return solutions
 
@@ -90,7 +97,7 @@ def fill_solutions():
 #        if i == 10000:
 #            break
 #       print "STARTING THIS WORD ==============>", word.keb, word.reb
-        solutions = get_individual_readings(word.keb, word.reb)
+        solutions = get_readings(word.keb, word.reb)
         for s in solutions:
             sol_id +=1
             solution_l.append({'id':sol_id, 'word_id':word.id})
@@ -100,25 +107,24 @@ def fill_solutions():
                                   'reading_id':seg[2],
                                   'index':seg[3]})
     print 'took %s seconds' % (time.time() - start)
-    #r_engine.execute(solution_t.insert(), solution_l)
-    #r_engine.execute(segment_t.insert(), segment_l)
-    
-    
-                
+    r_engine.execute(solution_t.insert(), solution_l)
+    r_engine.execute(segment_t.insert(), segment_l)
+
+
+
 
 def testme(k, r):
     print
     print "Solving: %s == %s" % (k, r)
-    solutions = get_individual_readings(k, r)
-    for i,sol in enumerate(solutions):
-        print "Solution #", i
-        for sol in sol:
-            print "%s -- %s  -- %s" % (sol[0], sol[1], sol[4])
+    solution = get_readings(k, r)
+
+    for sol in solution:
+        print "%s -- %s  -- %s" % (sol[0], sol[1], sol[4])
                 
 if __name__ == "__main__":
 #    cProfile.run('fill_solutions()', 'pstats')
 #    fill_solutions()
-
+    testme(u'漢字', u'かんじ')
     testme(u"小牛", u"こうし")
 #    testme(u"お腹", u"おなか")
     testme(u"バス停", u"バスてい")
@@ -129,6 +135,8 @@ if __name__ == "__main__":
     testme(u"小さい", u"ちいさい")
 #    testme(u"鉄道公安官", u"てつどうこうあんかん")
 #    testme(u"日帰り", u"ひがえり")
+
+
 #    print "\n\n"
 
 #p = pstats.Stats('pstats')

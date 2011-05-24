@@ -16,7 +16,7 @@ def get_readings(word, reading):
     solutions = []
     results = get_remaining_readings(word, reading)
     if len(results) > 0:
-        return min(results)
+        return min(results, key=len)
     else:
         return []
 
@@ -42,6 +42,12 @@ def get_remaining_readings(word, reading, segments=None):
                 return None
 
             for cr in char_readings:
+                #trim - from affixes
+                if cr[0] == '-':
+                    cr = cr[1:]
+                if cr[-1] == '-':
+                    cr = cr[:-1]
+
                 has_oku = False
                 if "." in cr:
                     has_oku = True
@@ -49,11 +55,7 @@ def get_remaining_readings(word, reading, segments=None):
                      #reading, separator, okurigana
                     (r, s, o) = cr.partition(".")
                     
-                    #trim - from affixes
-                    if r[0] == '-':
-                        r = r[1:]
-                    if r[-1] == '-':
-                        r = r[:-1]
+
                         
                     rl = len(r)  #reading length (non-okurigana portion)
                     ol = len(o)  #okurigana length
@@ -64,7 +66,7 @@ def get_remaining_readings(word, reading, segments=None):
                         tmp_segments.append([char+o, r+o])
                         get_remaining_readings(word[ol + 1:], reading[ol + rl:], tmp_segments)
                 else:
-                  
+                    #trim - from affixes
                     if cr[0] == '-':
                         cr = cr[1:]
                     if cr[-1] == '-':
