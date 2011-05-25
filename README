@@ -19,11 +19,11 @@ For use in other software, feel free to copy the portable directory
 (./ryuujouji_portable/). Example usage:
 
 from ryuujouji_portable import reading
-solutions = reading.get_readings(u'漢字', u'かんじ')
+segments = reading.get_readings(u'漢字', u'かんじ')
 
 #the solutions are returned as a list of lists. In the sub-lists, the
 #fist element is the character component, the second is the reading
-for s in solutions:
+for s in segments:
 	kanji = s[0]
 	reading = s[1]
 	print kanji, reading
