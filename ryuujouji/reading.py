@@ -99,8 +99,6 @@ def get_remaining_readings(word, reading, index=0, segments=None):
 #                            tmp_segments.append({'character':char+o, 'reading':daku_r+o, 'reading_id':cr.id, 'index':index})
 #                            index += rl+ol
 #                            get_remaining_readings(word[ol + 1:], reading[ol + rl:], index, tmp_segments)
-                        
-                        
                 else:
                     r = cr.reading
                     rl = len(r)
@@ -119,12 +117,12 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                             tmp_segments.append({'character':char, 'reading':r, 'reading_id':cr.id, 'index':index})
                             index += 1
                             get_remaining_readings(word[1:], reading[rl:], index, tmp_segments)
-#                    if try_handakuten:
-#                        if reading.startswith(handaku_r):
-#                            tmp_segments = copy.copy(segments)
-#                            tmp_segments.append({'character':char, 'reading':r, 'reading_id':cr.id, 'index':index})
-#                            index += 1
-#                            get_remaining_readings(word[1:], reading[rl:], index, tmp_segments)
+                    if try_handakuten:
+                        if reading.startswith(handaku_r):
+                            tmp_segments = copy.copy(segments)
+                            tmp_segments.append({'character':char, 'reading':r, 'reading_id':cr.id, 'index':index})
+                            index += 1
+                            get_remaining_readings(word[1:], reading[rl:], index, tmp_segments)
     return solutions
 
 found_l = []
@@ -198,28 +196,30 @@ def testme(k, r):
                 
 if __name__ == "__main__":
 #    cProfile.run('fill_solutions()', 'pstats')
-    fill_solutions()
+#    fill_solutions()
     print_stats()
 #    dry_run()
 #    testme(u'漢字', u'かんじ')
 #    testme(u"小牛", u"こうし")
-##    testme(u"お腹", u"おなか")
 #    testme(u"バス停", u"バスてい")
-##    testme(u"一つ", u"ひとつ")
 #    testme(u"非常事態", u"ひじょうじたい")
 #    testme(u"建て替える", u"たてかえる")
-##    testme(u"今日", u"きょう")
 #    testme(u"小さい", u"ちいさい")
 #    testme(u"鉄道公安官", u"てつどうこうあんかん")
-##    testme(u"日帰り", u"ひがえり")
-#    testme(u"活を求める", u"かつをもとめる")
-#    testme(u"守り人", u"もりびと")
+
     testme(u"手紙", u"てがみ")
     testme(u"筆箱", u"ふでばこ")
-#    testme(u"刈り入れ人", u"かりいれびと")
     testme(u"人人", u"ひとびと")
     testme(u"岸壁", u"がんぺき")
-    testme(u"大膳", u"がんぺき")
+    
+#    testme(u"大膳", u"がんぺき")
+##    testme(u"お腹", u"おなか")
+##    testme(u"一つ", u"ひとつ")
+##    testme(u"今日", u"きょう")
+##    testme(u"日帰り", u"ひがえり")
+#    testme(u"刈り入れ人", u"かりいれびと")
+#    testme(u"守り人", u"もりびと")
+#    testme(u"活を求める", u"かつをもとめる")
 
 #    print "\n\n"
 
@@ -227,6 +227,7 @@ if __name__ == "__main__":
 #p.sort_stats('time', 'cum').print_stats(.5)
 
 #last attempt
+#There are 161809 entries in JMdict. A solution has been found for 115877 of them. (71%)
 #There are 161809 entries in JMdict. A solution has been found for 114528 of them. (70%)
 #There are 161809 entries in JMdict. A solution has been found for 111607 of them. (68%)
 #There are 161809 entries in JMdict. A solution has been found for 107847 of them. (66%)
