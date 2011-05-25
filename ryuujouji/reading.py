@@ -2,11 +2,11 @@
 #Copyright (C) 2011 Houssam Salem <ntsp.gm@gmail.com>
 #License: GPLv3; http://www.gnu.org/licenses/gpl.txt
 
-import cProfile
-import pstats
+#import cProfile
+#import pstats
 import time
 import copy
-from sqlalchemy.sql import select, and_, or_
+from sqlalchemy.sql import select, and_, or_, bindparam
 
 import tools
 import db
@@ -15,7 +15,6 @@ meta = db.get_meta()
 meta.reflect()
 reading_t = meta.tables['reading']
 word_t = meta.tables['word']
-solution_t = meta.tables['solution']
 segment_t = meta.tables['segment']
 r_engine = meta.bind
 
@@ -34,9 +33,10 @@ def get_readings(word, reading):
         return []
 
 
-def get_remaining_readings(word, reading, segments=None):
+def get_remaining_readings(word, reading, index=0, segments=None):
     
-    if segments == None: segments = []
+    if segments == None:
+        segments = []
     
     if len(word) == 0:
         solutions.append(segments)
@@ -46,8 +46,9 @@ def get_remaining_readings(word, reading, segments=None):
             if len(reading) != 0:
                 if char == reading[0]:
                     tmp_segments = copy.copy(segments)
-                    tmp_segments.append([char, char, 0, 0, 'kana'])
-                    get_remaining_readings(word[1:], reading[1:], tmp_segments)
+                    tmp_segments.append({'character':char, 'reading':char, 'reading_id':0, 'index':index})
+                    index += 1
+                    get_remaining_readings(word[1:], reading[1:], index, tmp_segments)
         else:
             s = select([reading_t],
                        reading_t.c['character'] == char)
@@ -68,8 +69,9 @@ def get_remaining_readings(word, reading, segments=None):
 
                     if r == reading[:rl] and ot == o:
                         tmp_segments = copy.copy(segments)
-                        tmp_segments.append([char+o, r+o, cr.id, 0, 'kanji (%s) with okurigana (%s)'% (r,o)])
-                        get_remaining_readings(word[ol + 1:], reading[ol + rl:], tmp_segments)
+                        tmp_segments.append({'character':char+o, 'reading':r+o, 'reading_id':cr.id, 'index':index})
+                        index += rl+ol
+                        get_remaining_readings(word[ol + 1:], reading[ol + rl:], index, tmp_segments)
                 else:
                     r = cr.reading
                     rl = len(r)
@@ -79,63 +81,75 @@ def get_remaining_readings(word, reading, segments=None):
 
                     if reading.startswith(r):
                         tmp_segments = copy.copy(segments)
-                        tmp_segments.append([char, r, cr.id, 0, 'kanji'])
-                        get_remaining_readings(word[1:], reading[rl:], tmp_segments)
+                        tmp_segments.append({'character':char, 'reading':r, 'reading_id':cr.id, 'index':index})
+                        index += 1
+                        get_remaining_readings(word[1:], reading[rl:], index, tmp_segments)
     return solutions
 
-solution_l = []
+found_l = []
 segment_l = []
 
 def fill_solutions():
-    sol_id = 0
     start = time.time()
+    r_engine.execute(segment_t.delete())
     s = select([word_t])
-    words = r_engine.execute(s)
+    words = r_engine.execute(s).fetchall()
     i = 0
     for word in words:
-#        i += 1
-#        if i == 10000:
-#            break
-#       print "STARTING THIS WORD ==============>", word.keb, word.reb
-        solutions = get_readings(word.keb, word.reb)
-        for s in solutions:
-            sol_id +=1
-            solution_l.append({'id':sol_id, 'word_id':word.id})
-            for seg in s:
-                #print 'seg == ' , seg.unit
-                segment_l.append({'solution_id':sol_id,
-                                  'reading_id':seg[2],
-                                  'index':seg[3]})
-    print 'took %s seconds' % (time.time() - start)
-    r_engine.execute(solution_t.insert(), solution_l)
+        i += 1
+        if i == 5000:
+            break
+        segments = get_readings(word.keb, word.reb)
+        for seg in segments:
+            #print 'seg == ' , seg.unit
+            found_l.append({'word_id':word.id, 'found':True})
+            segment_l.append({'word_id':word.id,
+                              'reading_id':seg['reading_id'],
+                              'index':seg['index']})
+    print "Saving..."
+    u = word_t.update().where(word_t.c['id']==bindparam('word_id')).values(found=bindparam('found'))
+    r_engine.execute(u, found_l)
     r_engine.execute(segment_t.insert(), segment_l)
+    print 'took %s seconds' % (time.time() - start)
 
 
-
+def print_stats():
+    s = select([word_t])
+    words = r_engine.execute(s).fetchall()
+    n = len(words)
+    
+    s = select([word_t], word_t.c['found'] == True)
+    found = r_engine.execute(s).fetchall()
+    nf = len(found)
+    
+    print "There are %s entries in JMdict. A solution has been found for %s"\
+          " of them." % (n, nf)
 
 def testme(k, r):
     print
     print "Solving: %s == %s" % (k, r)
-    solution = get_readings(k, r)
+    segments = get_readings(k, r)
 
-    for sol in solution:
-        print "%s -- %s  -- %s" % (sol[0], sol[1], sol[4])
+    for s in segments:
+        print "%s -- %s  --  %s [index]" % (s['character'], s['reading'],
+                                             s['index'])
                 
 if __name__ == "__main__":
 #    cProfile.run('fill_solutions()', 'pstats')
-#    fill_solutions()
-    testme(u'漢字', u'かんじ')
-    testme(u"小牛", u"こうし")
-#    testme(u"お腹", u"おなか")
-    testme(u"バス停", u"バスてい")
-#    testme(u"一つ", u"ひとつ")
-    testme(u"非常事態", u"ひじょうじたい")
-    testme(u"建て替える", u"たてかえる")
-#    testme(u"今日", u"きょう")
-    testme(u"小さい", u"ちいさい")
+    fill_solutions()
+    print_stats()
+#    testme(u'漢字', u'かんじ')
+#    testme(u"小牛", u"こうし")
+##    testme(u"お腹", u"おなか")
+#    testme(u"バス停", u"バスてい")
+##    testme(u"一つ", u"ひとつ")
+#    testme(u"非常事態", u"ひじょうじたい")
+#    testme(u"建て替える", u"たてかえる")
+##    testme(u"今日", u"きょう")
+#    testme(u"小さい", u"ちいさい")
 #    testme(u"鉄道公安官", u"てつどうこうあんかん")
-#    testme(u"日帰り", u"ひがえり")
-
+##    testme(u"日帰り", u"ひがえり")
+#    testme(u"活を求める", u"かつをもとめる")
 
 #    print "\n\n"
 

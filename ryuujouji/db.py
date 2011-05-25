@@ -28,15 +28,12 @@ reading_t = Table('reading', r_meta,
 word_t = Table('word', r_meta,
                Column('id', Integer, primary_key=True),
                Column('keb', Unicode),
-               Column('reb', Unicode))
-
-solution_t = Table('solution', r_meta,
-                   Column('id', Integer, primary_key=True),
-                   Column('word_id', Integer, ForeignKey('word.id')))
+               Column('reb', Unicode),
+               Column('found', Boolean))
 
 segment_t = Table('segment', r_meta,
                    Column('id', Integer, primary_key=True),
-                   Column('solution_id', Integer, ForeignKey('solution.id')),
+                   Column('word_id', Integer, ForeignKey('word.id')),
                    Column('reading_id', Integer, ForeignKey('reading.id')),
                    Column('index', Integer))
 
@@ -132,7 +129,7 @@ def db_populate_words():
     words = jd_engine.execute(s)
     
     for word in words:
-        word_l.append({'keb':word.keb, 'reb':word.reb})
+        word_l.append({'keb':word.keb, 'reb':word.reb, 'found':False})
     
     r_engine.execute(word_t.insert(), word_l)
     print 'Filling database with word/reading data took '\
