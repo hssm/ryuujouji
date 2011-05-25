@@ -56,11 +56,25 @@ def get_remaining_readings(word, reading, index=0, segments=None):
 
             #TODO: Handle non-kanji and non-kana characters
             if char_readings == None:
+                print "Shouldn't be here for now."
                 return None
 
             for cr in char_readings:
                 #check for possible rendaku branch
-                
+#                print cr.reading
+                first_k = cr.reading[0]
+                try_ren = False
+                if tools.has_dakuten(first_k):
+                    d = tools.get_dakuten(first_k)
+                    new_r = cr.reading
+                    new_r = d + new_r[1:]
+                    try_ren = True
+                                       
+                    
+#                if tools.has_handakuten(first_k):
+#                    print 'h', first_k
+               
+
                 if cr.has_okurigana == True:
                     (r, s, o) = cr.reading.partition(".") #reading, separator, okurigana
 
@@ -73,6 +87,14 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                         tmp_segments.append({'character':char+o, 'reading':r+o, 'reading_id':cr.id, 'index':index})
                         index += rl+ol
                         get_remaining_readings(word[ol + 1:], reading[ol + rl:], index, tmp_segments)
+#                    elif try_ren:
+#                        if r == new_r and ot == o:   #if the original reading failed, try a rendaku version
+#                            tmp_segments = copy.copy(segments)
+#                            tmp_segments.append({'character':char+o, 'reading':new_r+o, 'reading_id':cr.id, 'index':index})
+#                            index += rl+ol
+#                            get_remaining_readings(word[ol + 1:], reading[ol + rl:], index, tmp_segments)
+                        
+                        
                 else:
                     r = cr.reading
                     rl = len(r)
@@ -80,11 +102,17 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                     if tools.is_kata(r[0]):
                         r = tools.kata_to_hira(r)
 
-                    if reading.startswith(r):
+                    if reading.startswith(r):                      
                         tmp_segments = copy.copy(segments)
                         tmp_segments.append({'character':char, 'reading':r, 'reading_id':cr.id, 'index':index})
                         index += 1
                         get_remaining_readings(word[1:], reading[rl:], index, tmp_segments)
+                    elif try_ren:
+                        if reading.startswith(new_r):     #if the original reading failed, try a rendaku version
+                            tmp_segments = copy.copy(segments)
+                            tmp_segments.append({'character':char, 'reading':r, 'reading_id':cr.id, 'index':index})
+                            index += 1
+                            get_remaining_readings(word[1:], reading[rl:], index, tmp_segments)
     return solutions
 
 found_l = []
@@ -131,6 +159,7 @@ def dry_run():
         else:
             if len(segments) > 0:
                 newly_solved += 1
+    print "The changes will solve another %s entries. " % newly_solved
 
 
 def print_stats():
@@ -157,25 +186,33 @@ def testme(k, r):
                 
 if __name__ == "__main__":
 #    cProfile.run('fill_solutions()', 'pstats')
-    #fill_solutions()
-    #print_stats()
-    dry_run()
-    testme(u'漢字', u'かんじ')
-    testme(u"小牛", u"こうし")
-#    testme(u"お腹", u"おなか")
-    testme(u"バス停", u"バスてい")
-#    testme(u"一つ", u"ひとつ")
-    testme(u"非常事態", u"ひじょうじたい")
-    testme(u"建て替える", u"たてかえる")
-#    testme(u"今日", u"きょう")
-    testme(u"小さい", u"ちいさい")
-    testme(u"鉄道公安官", u"てつどうこうあんかん")
-#    testme(u"日帰り", u"ひがえり")
-    testme(u"活を求める", u"かつをもとめる")
+#    fill_solutions()
+    print_stats()
+#    dry_run()
+#    testme(u'漢字', u'かんじ')
+#    testme(u"小牛", u"こうし")
+##    testme(u"お腹", u"おなか")
+#    testme(u"バス停", u"バスてい")
+##    testme(u"一つ", u"ひとつ")
+#    testme(u"非常事態", u"ひじょうじたい")
+#    testme(u"建て替える", u"たてかえる")
+##    testme(u"今日", u"きょう")
+#    testme(u"小さい", u"ちいさい")
+#    testme(u"鉄道公安官", u"てつどうこうあんかん")
+##    testme(u"日帰り", u"ひがえり")
+#    testme(u"活を求める", u"かつをもとめる")
+#    testme(u"守り人", u"もりびと")
+    testme(u"手紙", u"てがみ")
     testme(u"筆箱", u"ふでばこ")
+#    testme(u"刈り入れ人", u"かりいれびと")
+    testme(u"人人", u"ひとびと")
 
 #    print "\n\n"
 
 #p = pstats.Stats('pstats')
 #p.sort_stats('time', 'cum').print_stats(.5)
+
+#last attempt
+#There are 161809 entries in JMdict. A solution has been found for 111607 of them. (68%)
+#There are 161809 entries in JMdict. A solution has been found for 107847 of them. (66%)
 

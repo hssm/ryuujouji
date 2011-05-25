@@ -2,6 +2,8 @@
 #Copyright (C) 2011 Houssam Salem <ntsp.gm@gmail.com>
 #License: GPLv3; http://www.gnu.org/licenses/gpl.txt
 
+import sys
+
 #Hiragana range is U+3041 to U+309F
 HIRAGANA_START = ord(unicode(u'ぁ'))
 HIRAGANA_END = ord(unicode(u'ゟ'))    
@@ -13,6 +15,10 @@ KATAKANA_END = ord(unicode(u'ヿ'))
 KATAKANA_RANGE = range(KATAKANA_START, KATAKANA_END+1)
 
 KANA_RANGE = range(HIRAGANA_START, KATAKANA_END+1)
+
+HAS_DAKUTEN_LIST = list(u'かきくけこたちつてとさしすせそはひふへほカキクケコタチツテトサシスセソハヒフヘホ')
+HAS_HANDAKUTEN_LIST = list(u'はひふへほハヒフヘホ') 
+
 
 def is_kata(s):
     if len(s) > 0:
@@ -53,7 +59,23 @@ def hira_to_kata(hira):
         kata += unichr(ord(char)+96)
     return kata
 
-def print_hira_kata():   
+def has_dakuten(kana):
+    if kana in HAS_DAKUTEN_LIST:
+        return True
+    return False
+
+def get_dakuten(kana):
+    return unichr(ord(kana)+1)
+
+def has_handakuten(kana):
+    if kana in HAS_HANDAKUTEN_LIST:
+        return True
+    return False
+
+def get_handakuten(kana):
+    return unichr(ord(kana)+2)
+    
+def print_hira_kata():
     for n in HIRAGANA_RANGE:
         sys.stdout.write(unichr(n))
     print ""
@@ -73,3 +95,12 @@ if __name__ == '__main__':
     print is_kata(u'きょう')
     print is_kata(u'きょうはスゴイ')
     
+    print get_dakuten(u'か')
+    print get_dakuten(u'ほ')
+    print get_dakuten(u'つ')
+    
+    print has_handakuten(u'ふ')
+    print has_handakuten(u'へ')
+    print get_handakuten(u'は')
+    print get_handakuten(u'ひ')
+    print get_handakuten(u'ほ')
