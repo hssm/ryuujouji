@@ -63,17 +63,23 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                 #check for possible rendaku branch
 #                print cr.reading
                 first_k = cr.reading[0]
-                try_ren = False
+                try_dakuten = False
+                try_handakuten = False
                 if tools.has_dakuten(first_k):
                     d = tools.get_dakuten(first_k)
-                    new_r = cr.reading
-                    new_r = d + new_r[1:]
-                    try_ren = True
+                    daku_r = cr.reading
+                    daku_r = d + daku_r[1:]
+                    try_dakuten = True
+                    if tools.is_kata(daku_r[0]):
+                        daku_r = tools.kata_to_hira(daku_r)
                                        
-                    
-#                if tools.has_handakuten(first_k):
-#                    print 'h', first_k
-               
+                if tools.has_handakuten(first_k):
+                    d = tools.get_handakuten(first_k)
+                    handaku_r = cr.reading
+                    handaku_r = d + handaku_r[1:]
+                    try_handakuten = True
+                    if tools.is_kata(handaku_r[0]):
+                        handaku_r = tools.kata_to_hira(handaku_r)
 
                 if cr.has_okurigana == True:
                     (r, s, o) = cr.reading.partition(".") #reading, separator, okurigana
@@ -87,10 +93,10 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                         tmp_segments.append({'character':char+o, 'reading':r+o, 'reading_id':cr.id, 'index':index})
                         index += rl+ol
                         get_remaining_readings(word[ol + 1:], reading[ol + rl:], index, tmp_segments)
-#                    elif try_ren:
-#                        if r == new_r and ot == o:   #if the original reading failed, try a rendaku version
+#                    elif try_dakuten:
+#                        if r == daku_r and ot == o:   #if the original reading failed, try a rendaku version
 #                            tmp_segments = copy.copy(segments)
-#                            tmp_segments.append({'character':char+o, 'reading':new_r+o, 'reading_id':cr.id, 'index':index})
+#                            tmp_segments.append({'character':char+o, 'reading':daku_r+o, 'reading_id':cr.id, 'index':index})
 #                            index += rl+ol
 #                            get_remaining_readings(word[ol + 1:], reading[ol + rl:], index, tmp_segments)
                         
@@ -107,12 +113,18 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                         tmp_segments.append({'character':char, 'reading':r, 'reading_id':cr.id, 'index':index})
                         index += 1
                         get_remaining_readings(word[1:], reading[rl:], index, tmp_segments)
-                    elif try_ren:
-                        if reading.startswith(new_r):     #if the original reading failed, try a rendaku version
+                    if try_dakuten:
+                        if reading.startswith(daku_r):
                             tmp_segments = copy.copy(segments)
                             tmp_segments.append({'character':char, 'reading':r, 'reading_id':cr.id, 'index':index})
                             index += 1
                             get_remaining_readings(word[1:], reading[rl:], index, tmp_segments)
+#                    if try_handakuten:
+#                        if reading.startswith(handaku_r):
+#                            tmp_segments = copy.copy(segments)
+#                            tmp_segments.append({'character':char, 'reading':r, 'reading_id':cr.id, 'index':index})
+#                            index += 1
+#                            get_remaining_readings(word[1:], reading[rl:], index, tmp_segments)
     return solutions
 
 found_l = []
@@ -186,7 +198,7 @@ def testme(k, r):
                 
 if __name__ == "__main__":
 #    cProfile.run('fill_solutions()', 'pstats')
-#    fill_solutions()
+    fill_solutions()
     print_stats()
 #    dry_run()
 #    testme(u'漢字', u'かんじ')
@@ -206,6 +218,8 @@ if __name__ == "__main__":
     testme(u"筆箱", u"ふでばこ")
 #    testme(u"刈り入れ人", u"かりいれびと")
     testme(u"人人", u"ひとびと")
+    testme(u"岸壁", u"がんぺき")
+    testme(u"大膳", u"がんぺき")
 
 #    print "\n\n"
 
@@ -213,6 +227,7 @@ if __name__ == "__main__":
 #p.sort_stats('time', 'cum').print_stats(.5)
 
 #last attempt
+#There are 161809 entries in JMdict. A solution has been found for 114528 of them. (70%)
 #There are 161809 entries in JMdict. A solution has been found for 111607 of them. (68%)
 #There are 161809 entries in JMdict. A solution has been found for 107847 of them. (66%)
 
