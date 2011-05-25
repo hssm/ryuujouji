@@ -18,6 +18,8 @@ word_t = meta.tables['word']
 segment_t = meta.tables['segment']
 r_engine = meta.bind
 
+select_char = select([reading_t], reading_t.c['character']==bindparam('character'))
+
 
 solutions = []
 def get_readings(word, reading):
@@ -37,7 +39,7 @@ def get_remaining_readings(word, reading, index=0, segments=None):
     
     if segments == None:
         segments = []
-    
+
     if len(word) == 0:
         solutions.append(segments)
     else:
@@ -50,16 +52,15 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                     index += 1
                     get_remaining_readings(word[1:], reading[1:], index, tmp_segments)
         else:
-            s = select([reading_t],
-                       reading_t.c['character'] == char)
-
-            char_readings = r_engine.execute(s).fetchall()
+            char_readings = r_engine.execute(select_char, character=char).fetchall()
 
             #TODO: Handle non-kanji and non-kana characters
             if char_readings == None:
                 return None
 
             for cr in char_readings:
+                #check for possible rendaku branch
+                
                 if cr.has_okurigana == True:
                     (r, s, o) = cr.reading.partition(".") #reading, separator, okurigana
 
@@ -93,12 +94,12 @@ def fill_solutions():
     start = time.time()
     r_engine.execute(segment_t.delete())
     s = select([word_t])
-    words = r_engine.execute(s).fetchall()
+    words = r_engine.execute(s)
     i = 0
     for word in words:
-        i += 1
-        if i == 5000:
-            break
+#        i += 1
+#        if i == 10000:
+#            break
         segments = get_readings(word.keb, word.reb)
         for seg in segments:
             #print 'seg == ' , seg.unit
@@ -112,6 +113,25 @@ def fill_solutions():
     r_engine.execute(segment_t.insert(), segment_l)
     print 'took %s seconds' % (time.time() - start)
 
+def dry_run():
+    """Don't save any changes to the database, but check if the present
+     parsing behaviour breaks the solving of an already-solved entry.
+     """
+     
+    start = time.time()
+    r_engine.execute(segment_t.delete())
+    s = select([word_t])
+    words = r_engine.execute(s)
+    newly_solved = 0
+    for word in words:
+        segments = get_readings(word.keb, word.reb)
+        if word.found == True:
+            if len(segments) == 0:
+                print "Regression for word %s " % word.keb
+        else:
+            if len(segments) > 0:
+                newly_solved += 1
+
 
 def print_stats():
     s = select([word_t])
@@ -122,8 +142,9 @@ def print_stats():
     found = r_engine.execute(s).fetchall()
     nf = len(found)
     
+    percent = float(nf) / float(n) * 100
     print "There are %s entries in JMdict. A solution has been found for %s"\
-          " of them." % (n, nf)
+          " of them. (%d%%)" % (n, nf, percent)
 
 def testme(k, r):
     print
@@ -136,20 +157,22 @@ def testme(k, r):
                 
 if __name__ == "__main__":
 #    cProfile.run('fill_solutions()', 'pstats')
-    fill_solutions()
-    print_stats()
-#    testme(u'漢字', u'かんじ')
-#    testme(u"小牛", u"こうし")
-##    testme(u"お腹", u"おなか")
-#    testme(u"バス停", u"バスてい")
-##    testme(u"一つ", u"ひとつ")
-#    testme(u"非常事態", u"ひじょうじたい")
-#    testme(u"建て替える", u"たてかえる")
-##    testme(u"今日", u"きょう")
-#    testme(u"小さい", u"ちいさい")
-#    testme(u"鉄道公安官", u"てつどうこうあんかん")
-##    testme(u"日帰り", u"ひがえり")
-#    testme(u"活を求める", u"かつをもとめる")
+    #fill_solutions()
+    #print_stats()
+    dry_run()
+    testme(u'漢字', u'かんじ')
+    testme(u"小牛", u"こうし")
+#    testme(u"お腹", u"おなか")
+    testme(u"バス停", u"バスてい")
+#    testme(u"一つ", u"ひとつ")
+    testme(u"非常事態", u"ひじょうじたい")
+    testme(u"建て替える", u"たてかえる")
+#    testme(u"今日", u"きょう")
+    testme(u"小さい", u"ちいさい")
+    testme(u"鉄道公安官", u"てつどうこうあんかん")
+#    testme(u"日帰り", u"ひがえり")
+    testme(u"活を求める", u"かつをもとめる")
+    testme(u"筆箱", u"ふでばこ")
 
 #    print "\n\n"
 
