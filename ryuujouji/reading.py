@@ -92,23 +92,62 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                         soku_r = tools.kata_to_hira(soku_r)
 
                 if cr.has_okurigana == True:
-                    (r, s, o) = cr.reading.partition(".") #reading, separator, okurigana
+                    #NOTE: at the moment, we are assuming no okurigana are 
+                    #in written in katakana. 
+                    
+                    #reading, separator, okurigana
+                    (r, s, o) = cr.reading.partition(".")
 
                     rl = len(r)  #reading length (non-okurigana portion)
                     ol = len(o)  #okurigana length
-                    ot = word[1:ol + 1] #the portion we want to test as okurigana
+                    #the portion we want to test as okurigana
+                    ot = word[1:ol + 1]
+
+                    try_ri = False
+                    if o.endswith(u'る'):
+                        try_ri = True
+                        ri_o = o[:-1] + u'り'
 
                     if r == reading[:rl] and ot == o:
                         tmp_segments = copy.copy(segments)
-                        tmp_segments.append({'character':char+o, 'reading':r+o, 'reading_id':cr.id, 'index':index})
+                        tmp_segments.append({'character':char+o,
+                                             'reading':r+o,
+                                             'reading_id':cr.id,
+                                             'index':index})
                         index += rl+ol
-                        get_remaining_readings(word[ol + 1:], reading[ol + rl:], index, tmp_segments)
-#                    elif try_dakuten:
-#                        if r == daku_r and ot == o:
+                        get_remaining_readings(word[ol + 1:],
+                                               reading[ol + rl:],
+                                               index,
+                                               tmp_segments)
+                    if try_ri:
+                        if r == reading[:rl] and ot == ri_o:
+                            tmp_segments = copy.copy(segments)
+                            tmp_segments.append({'character':char+o,
+                                                 'reading':r+o,
+                                                 'reading_id':cr.id,
+                                                 'index':index})
+                            index += rl+ol
+                            get_remaining_readings(word[ol + 1:],
+                                                   reading[ol + rl:],
+                                                   index,
+                                                   tmp_segments)
+                        
+#                    if try_dakuten:
+#                        (r, s, o) = daku_r.partition(".")
+#
+#                        try_ri = False
+#                        if o.endswith(u'る'):
+#                            try_ri = True
+#                            ri_o = o[:-1] + u'り'
+#                        
+#                        if r == reading[:rl] and ot == o:
 #                            tmp_segments = copy.copy(segments)
 #                            tmp_segments.append({'character':char+o, 'reading':daku_r+o, 'reading_id':cr.id, 'index':index})
 #                            index += rl+ol
 #                            get_remaining_readings(word[ol + 1:], reading[ol + rl:], index, tmp_segments)
+#                            
+#                        if try_ri:
+#                            print 'here'
 #                    elif try_handakuten:
 #                        if r == handaku_r and ot == o:
 #                            tmp_segments = copy.copy(segments)
@@ -218,7 +257,7 @@ def testme(k, r):
                 
 if __name__ == "__main__":
 #    cProfile.run('fill_solutions()', 'pstats')
-    fill_solutions()
+#    fill_solutions()
     print_stats()
 #    dry_run()
 #    testme(u'漢字', u'かんじ')
@@ -232,20 +271,20 @@ if __name__ == "__main__":
 #    testme(u"筆箱", u"ふでばこ")
 #    testme(u"人人", u"ひとびと")
 #    testme(u"岸壁", u"がんぺき")
-
-    testme(u"別荘", u"べっそう")
-    testme(u"出席", u"しゅっせき")
-    testme(u"結婚", u"けっこん")
-    testme(u"分別", u"ふんべつ")
-    
-    
-    
+#    testme(u"一つ", u"ひとつ")
+#    testme(u"別荘", u"べっそう")
+#    testme(u"出席", u"しゅっせき")
+#    testme(u"結婚", u"けっこん")
+#    testme(u"分別", u"ふんべつ")   
+#    testme(u"刈り手", u"かりて")    
+#    testme(u"刈り入れ人", u"かりいれびと")
+        
 #    testme(u"大膳", u"がんぺき")
 ##    testme(u"お腹", u"おなか")
-##    testme(u"一つ", u"ひとつ")
+
 ##    testme(u"今日", u"きょう")
-##    testme(u"日帰り", u"ひがえり")
-#    testme(u"刈り入れ人", u"かりいれびと")
+    testme(u"日帰り", u"ひがえり")
+
 #    testme(u"守り人", u"もりびと")
 #    testme(u"活を求める", u"かつをもとめる")
 
@@ -255,6 +294,7 @@ if __name__ == "__main__":
 #p.sort_stats('time', 'cum').print_stats(.5)
 
 #last attempt
+#There are 161809 entries in JMdict. A solution has been found for 121805 of them. (75%)
 #There are 161809 entries in JMdict. A solution has been found for 120073 of them. (74%)
 #There are 161809 entries in JMdict. A solution has been found for 115877 of them. (71%)
 #There are 161809 entries in JMdict. A solution has been found for 114528 of them. (70%)
