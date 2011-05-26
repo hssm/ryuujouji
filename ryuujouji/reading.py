@@ -18,7 +18,8 @@ word_t = meta.tables['word']
 segment_t = meta.tables['segment']
 r_engine = meta.bind
 
-select_char = select([reading_t], reading_t.c['character']==bindparam('character'))
+select_char = select([reading_t],
+                     reading_t.c['character']==bindparam('character'))
 
 
 solutions = []
@@ -48,11 +49,16 @@ def get_remaining_readings(word, reading, index=0, segments=None):
             if len(reading) != 0:
                 if char == reading[0]:
                     tmp_segments = copy.copy(segments)
-                    tmp_segments.append({'character':char, 'reading':char, 'reading_id':0, 'index':index})
+                    tmp_segments.append({'character':char,
+                                         'reading':char,
+                                         'reading_id':0,
+                                         'index':index})
                     index += 1
-                    get_remaining_readings(word[1:], reading[1:], index, tmp_segments)
+                    get_remaining_readings(word[1:], reading[1:],
+                                           index, tmp_segments)
         else:
-            char_readings = r_engine.execute(select_char, character=char).fetchall()
+            char_readings = r_engine.execute(select_char,
+                                             character=char).fetchall()
 
             #TODO: Handle non-kanji and non-kana characters
             if char_readings == None:
@@ -60,143 +66,84 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                 return None
 
             for cr in char_readings:
-                #check for possible rendaku branch
-#                print cr.reading
                 first_k = cr.reading[0]
                 last_k = cr.reading[len(cr.reading)-1]
 
+                variants = []
+                oku_variants = []
                 
-                try_dakuten = False
-                try_handakuten = False
-                try_sokuon = False
+                variants.append(cr.reading)
+                
                 if tools.has_dakuten(first_k):
                     d = tools.get_dakuten(first_k)
-                    daku_r = cr.reading
-                    daku_r = d + daku_r[1:]
-                    try_dakuten = True
+                    daku_r = d + cr.reading[1:]
                     if tools.is_kata(daku_r[0]):
                         daku_r = tools.kata_to_hira(daku_r)
+                    variants.append(daku_r)
                                        
                 if tools.has_handakuten(first_k):
                     d = tools.get_handakuten(first_k)
-                    handaku_r = cr.reading
-                    handaku_r = d + handaku_r[1:]
-                    try_handakuten = True
+                    handaku_r = d + cr.reading[1:]
                     if tools.is_kata(handaku_r[0]):
                         handaku_r = tools.kata_to_hira(handaku_r)
+                    variants.append(handaku_r)
+                
                 if last_k == u'つ' or last_k == u'ツ':
-                    try_sokuon = True
-                    soku_r = cr.reading
-                    soku_r = soku_r[:-1] + tools.get_sokuon(soku_r[-1])
+                    soku_r = cr.reading[:-1] + tools.get_sokuon(cr.reading[-1])
                     if tools.is_kata(soku_r[0]):
                         soku_r = tools.kata_to_hira(soku_r)
+                    variants.append(soku_r)
 
-                if cr.has_okurigana == True:
-                    #NOTE: at the moment, we are assuming no okurigana are 
-                    #in written in katakana. 
-                    
-                    #reading, separator, okurigana
-                    (r, s, o) = cr.reading.partition(".")
-
-                    rl = len(r)  #reading length (non-okurigana portion)
-                    ol = len(o)  #okurigana length
-                    #the portion we want to test as okurigana
-                    ot = word[1:ol + 1]
-
-                    try_ri = False
-                    if o.endswith(u'る'):
-                        try_ri = True
-                        ri_o = o[:-1] + u'り'
-
-                    if r == reading[:rl] and ot == o:
-                        tmp_segments = copy.copy(segments)
-                        tmp_segments.append({'character':char+o,
+                (r, s, o) = cr.reading.partition(".")
+                rl = len(r)  #reading length (non-okurigana portion)
+                ol = len(o)  #okurigana length
+                #the portion of the known reading we want to test as okurigana
+                word_oku = word[1:ol + 1]
+                
+                if o.endswith(u'る'):
+                    ri_o = o[:-1] + u'り'
+                    oku_variants.append(ri_o)
+                                       
+                for v in variants:
+                    (r, s, o) = v.partition(".")
+                    if tools.is_kata(r[0]):
+                        r = tools.kata_to_hira(r)
+                        
+                    if o is not u'':    #has okurigana   
+                        if r == reading[:rl] and o == word_oku:
+                            tmp_segments = copy.copy(segments)
+                            tmp_segments.append({'character':char+o,
                                              'reading':r+o,
                                              'reading_id':cr.id,
                                              'index':index})
-                        index += rl+ol
-                        get_remaining_readings(word[ol + 1:],
-                                               reading[ol + rl:],
-                                               index,
-                                               tmp_segments)
-                    if try_ri:
-                        if r == reading[:rl] and ot == ri_o:
-                            tmp_segments = copy.copy(segments)
-                            tmp_segments.append({'character':char+o,
-                                                 'reading':r+o,
-                                                 'reading_id':cr.id,
-                                                 'index':index})
                             index += rl+ol
                             get_remaining_readings(word[ol + 1:],
                                                    reading[ol + rl:],
                                                    index,
                                                    tmp_segments)
-                        
-                    if try_dakuten:
-                        (r, s, o) = daku_r.partition(".")
-
-                        try_ri = False
-                        if o.endswith(u'る'):
-                            try_ri = True
-                            ri_o = o[:-1] + u'り'
-
-                        if r == reading[:rl] and ot == o:
-                            tmp_segments = copy.copy(segments)
-                            tmp_segments.append({'character':char+o, 'reading':daku_r+o, 'reading_id':cr.id, 'index':index})
-                            index += rl+ol
-                            get_remaining_readings(word[ol + 1:], reading[ol + rl:], index, tmp_segments)
-                            
-                        if try_ri:
-                            if r == reading[:rl] and ot == ri_o:
+                        for ov in oku_variants:
+                            if r == reading[:rl] and word_oku == ov:
                                 tmp_segments = copy.copy(segments)
-                                tmp_segments.append({'character':char+o, 'reading':daku_r+o, 'reading_id':cr.id, 'index':index})
+                                tmp_segments.append({'character':char+o,
+                                                     'reading':r+o,
+                                                     'reading_id':cr.id,
+                                                     'index':index})
                                 index += rl+ol
-                                get_remaining_readings(word[ol + 1:], reading[ol + rl:], index, tmp_segments)
-
-                    if try_handakuten:
-                        (r, s, o) = handaku_r.partition(".")
-                        if r == reading[:rl] and ot == o:
+                                get_remaining_readings(word[ol + 1:],
+                                                       reading[ol + rl:],
+                                                       index,
+                                                       tmp_segments)
+                    else:
+                        if reading.startswith(r):
                             tmp_segments = copy.copy(segments)
-                            tmp_segments.append({'character':char+o, 'reading':handaku_r+o, 'reading_id':cr.id, 'index':index})
-                            index += rl+ol
-                            get_remaining_readings(word[ol + 1:], reading[ol + rl:], index, tmp_segments)
-
-                        if try_ri:
-                            if r == reading[:rl] and ot == ri_o:
-                                tmp_segments = copy.copy(segments)
-                                tmp_segments.append({'character':char+o, 'reading':handaku_r+o, 'reading_id':cr.id, 'index':index})
-                                index += rl+ol
-                                get_remaining_readings(word[ol + 1:], reading[ol + rl:], index, tmp_segments)
-                else:
-                    r = cr.reading
-                    rl = len(r)
-                    #we deal with readings in hiragana, so convert from katakana if it exists
-                    if tools.is_kata(r[0]):
-                        r = tools.kata_to_hira(r)
-
-                    if reading.startswith(r):                      
-                        tmp_segments = copy.copy(segments)
-                        tmp_segments.append({'character':char, 'reading':r, 'reading_id':cr.id, 'index':index})
-                        index += 1
-                        get_remaining_readings(word[1:], reading[rl:], index, tmp_segments)
-                    if try_dakuten:
-                        if reading.startswith(daku_r):
-                            tmp_segments = copy.copy(segments)
-                            tmp_segments.append({'character':char, 'reading':r, 'reading_id':cr.id, 'index':index})
+                            tmp_segments.append({'character':char,
+                                                 'reading':r,
+                                                 'reading_id':cr.id,
+                                                 'index':index})
                             index += 1
-                            get_remaining_readings(word[1:], reading[rl:], index, tmp_segments)
-                    if try_handakuten:
-                        if reading.startswith(handaku_r):
-                            tmp_segments = copy.copy(segments)
-                            tmp_segments.append({'character':char, 'reading':r, 'reading_id':cr.id, 'index':index})
-                            index += 1
-                            get_remaining_readings(word[1:], reading[rl:], index, tmp_segments)
-                    if try_sokuon:
-                        if reading.startswith(soku_r):
-                            tmp_segments = copy.copy(segments)
-                            tmp_segments.append({'character':char, 'reading':r, 'reading_id':cr.id, 'index':index})
-                            index += 1
-                            get_remaining_readings(word[1:], reading[rl:], index, tmp_segments)
+                            get_remaining_readings(word[1:], reading[rl:],
+                                                   index, tmp_segments)
+
     return solutions
 
 found_l = []
@@ -291,15 +238,19 @@ if __name__ == "__main__":
 #    testme(u"分別", u"ふんべつ")   
 #    testme(u"刈り手", u"かりて")    
 #    testme(u"刈り入れ人", u"かりいれびと")
-        
-#    testme(u"大膳", u"がんぺき")
-##    testme(u"お腹", u"おなか")
+#    testme(u"日帰り", u"ひがえり")        
 
+    testme(u"守り人", u"もりびと")
+    testme(u"働き蟻", u"はたらきあり")
+    
+    
+
+#    testme(u"お腹", u"おなか")
 ##    testme(u"今日", u"きょう")
-    testme(u"日帰り", u"ひがえり")
 
-#    testme(u"守り人", u"もりびと")
-#    testme(u"活を求める", u"かつをもとめる")
+
+
+
 
 #    print "\n\n"
 
@@ -307,6 +258,7 @@ if __name__ == "__main__":
 #p.sort_stats('time', 'cum').print_stats(.5)
 
 #last attempt
+#There are 161809 entries in JMdict. A solution has been found for 122567 of them. (75%)
 #There are 161809 entries in JMdict. A solution has been found for 122506 of them. (75%)
 #There are 161809 entries in JMdict. A solution has been found for 122286 of them. (75%)
 #There are 161809 entries in JMdict. A solution has been found for 121805 of them. (75%)
