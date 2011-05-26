@@ -75,6 +75,9 @@ def has_handakuten(kana):
 def get_handakuten(kana):
     return unichr(ord(kana)+2)
     
+def get_sokuon(kana):
+    return unichr(ord(kana)-1)
+
 def print_hira_kata():
     for n in HIRAGANA_RANGE:
         sys.stdout.write(unichr(n))

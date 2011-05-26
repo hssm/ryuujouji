@@ -63,8 +63,12 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                 #check for possible rendaku branch
 #                print cr.reading
                 first_k = cr.reading[0]
+                last_k = cr.reading[len(cr.reading)-1]
+
+                
                 try_dakuten = False
                 try_handakuten = False
+                try_sokuon = False
                 if tools.has_dakuten(first_k):
                     d = tools.get_dakuten(first_k)
                     daku_r = cr.reading
@@ -80,6 +84,12 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                     try_handakuten = True
                     if tools.is_kata(handaku_r[0]):
                         handaku_r = tools.kata_to_hira(handaku_r)
+                if last_k == u'つ' or last_k == u'ツ':
+                    try_sokuon = True
+                    soku_r = cr.reading
+                    soku_r = soku_r[:-1] + tools.get_sokuon(soku_r[-1])
+                    if tools.is_kata(soku_r[0]):
+                        soku_r = tools.kata_to_hira(soku_r)
 
                 if cr.has_okurigana == True:
                     (r, s, o) = cr.reading.partition(".") #reading, separator, okurigana
@@ -94,9 +104,15 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                         index += rl+ol
                         get_remaining_readings(word[ol + 1:], reading[ol + rl:], index, tmp_segments)
 #                    elif try_dakuten:
-#                        if r == daku_r and ot == o:   #if the original reading failed, try a rendaku version
+#                        if r == daku_r and ot == o:
 #                            tmp_segments = copy.copy(segments)
 #                            tmp_segments.append({'character':char+o, 'reading':daku_r+o, 'reading_id':cr.id, 'index':index})
+#                            index += rl+ol
+#                            get_remaining_readings(word[ol + 1:], reading[ol + rl:], index, tmp_segments)
+#                    elif try_handakuten:
+#                        if r == handaku_r and ot == o:
+#                            tmp_segments = copy.copy(segments)
+#                            tmp_segments.append({'character':char+o, 'reading':handaku_r+o, 'reading_id':cr.id, 'index':index})
 #                            index += rl+ol
 #                            get_remaining_readings(word[ol + 1:], reading[ol + rl:], index, tmp_segments)
                 else:
@@ -119,6 +135,12 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                             get_remaining_readings(word[1:], reading[rl:], index, tmp_segments)
                     if try_handakuten:
                         if reading.startswith(handaku_r):
+                            tmp_segments = copy.copy(segments)
+                            tmp_segments.append({'character':char, 'reading':r, 'reading_id':cr.id, 'index':index})
+                            index += 1
+                            get_remaining_readings(word[1:], reading[rl:], index, tmp_segments)
+                    if try_sokuon:
+                        if reading.startswith(soku_r):
                             tmp_segments = copy.copy(segments)
                             tmp_segments.append({'character':char, 'reading':r, 'reading_id':cr.id, 'index':index})
                             index += 1
@@ -196,7 +218,7 @@ def testme(k, r):
                 
 if __name__ == "__main__":
 #    cProfile.run('fill_solutions()', 'pstats')
-#    fill_solutions()
+    fill_solutions()
     print_stats()
 #    dry_run()
 #    testme(u'漢字', u'かんじ')
@@ -206,11 +228,17 @@ if __name__ == "__main__":
 #    testme(u"建て替える", u"たてかえる")
 #    testme(u"小さい", u"ちいさい")
 #    testme(u"鉄道公安官", u"てつどうこうあんかん")
+#    testme(u"手紙", u"てがみ")
+#    testme(u"筆箱", u"ふでばこ")
+#    testme(u"人人", u"ひとびと")
+#    testme(u"岸壁", u"がんぺき")
 
-    testme(u"手紙", u"てがみ")
-    testme(u"筆箱", u"ふでばこ")
-    testme(u"人人", u"ひとびと")
-    testme(u"岸壁", u"がんぺき")
+    testme(u"別荘", u"べっそう")
+    testme(u"出席", u"しゅっせき")
+    testme(u"結婚", u"けっこん")
+    testme(u"分別", u"ふんべつ")
+    
+    
     
 #    testme(u"大膳", u"がんぺき")
 ##    testme(u"お腹", u"おなか")
@@ -227,6 +255,7 @@ if __name__ == "__main__":
 #p.sort_stats('time', 'cum').print_stats(.5)
 
 #last attempt
+#There are 161809 entries in JMdict. A solution has been found for 120073 of them. (74%)
 #There are 161809 entries in JMdict. A solution has been found for 115877 of them. (71%)
 #There are 161809 entries in JMdict. A solution has been found for 114528 of them. (70%)
 #There are 161809 entries in JMdict. A solution has been found for 111607 of them. (68%)
