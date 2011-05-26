@@ -140,15 +140,18 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                             try_ri = True
                             ri_o = o[:-1] + u'り'
 
-                       
                         if r == reading[:rl] and ot == o:
                             tmp_segments = copy.copy(segments)
                             tmp_segments.append({'character':char+o, 'reading':daku_r+o, 'reading_id':cr.id, 'index':index})
                             index += rl+ol
                             get_remaining_readings(word[ol + 1:], reading[ol + rl:], index, tmp_segments)
-#                            
-#                        if try_ri:
-#                            print 'here'
+                            
+                        if try_ri:
+                            if r == reading[:rl] and ot == ri_o:
+                                tmp_segments = copy.copy(segments)
+                                tmp_segments.append({'character':char+o, 'reading':daku_r+o, 'reading_id':cr.id, 'index':index})
+                                index += rl+ol
+                                get_remaining_readings(word[ol + 1:], reading[ol + rl:], index, tmp_segments)
 
                     if try_handakuten:
                         (r, s, o) = handaku_r.partition(".")
@@ -157,6 +160,13 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                             tmp_segments.append({'character':char+o, 'reading':handaku_r+o, 'reading_id':cr.id, 'index':index})
                             index += rl+ol
                             get_remaining_readings(word[ol + 1:], reading[ol + rl:], index, tmp_segments)
+
+                        if try_ri:
+                            if r == reading[:rl] and ot == ri_o:
+                                tmp_segments = copy.copy(segments)
+                                tmp_segments.append({'character':char+o, 'reading':handaku_r+o, 'reading_id':cr.id, 'index':index})
+                                index += rl+ol
+                                get_remaining_readings(word[ol + 1:], reading[ol + rl:], index, tmp_segments)
                 else:
                     r = cr.reading
                     rl = len(r)
@@ -260,8 +270,8 @@ def testme(k, r):
                 
 if __name__ == "__main__":
 #    cProfile.run('fill_solutions()', 'pstats')
-    fill_solutions()
-    print_stats()
+#    fill_solutions()
+#    print_stats()
 #    dry_run()
 #    testme(u'漢字', u'かんじ')
 #    testme(u"小牛", u"こうし")
@@ -297,6 +307,7 @@ if __name__ == "__main__":
 #p.sort_stats('time', 'cum').print_stats(.5)
 
 #last attempt
+#There are 161809 entries in JMdict. A solution has been found for 122506 of them. (75%)
 #There are 161809 entries in JMdict. A solution has been found for 122286 of them. (75%)
 #There are 161809 entries in JMdict. A solution has been found for 121805 of them. (75%)
 #There are 161809 entries in JMdict. A solution has been found for 120073 of them. (74%)
