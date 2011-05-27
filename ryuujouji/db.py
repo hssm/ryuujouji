@@ -22,8 +22,7 @@ reading_t = Table('reading', r_meta,
                   Column('character', Unicode, index=True),
                   Column('reading', Unicode, index=True),
                   Column('type', String),
-                  Column('affix', String),
-                  Column('has_okurigana', Boolean, nullable=False))
+                  Column('affix', String))
 
 word_t = Table('word', r_meta,
                Column('id', Integer, primary_key=True),
@@ -85,15 +84,10 @@ def db_populate_kanji_readings():
             affix = "suffix"
             reading = reading[1:]
 
-        has_oku = False
-        if "." in r.reading:
-            has_oku = True
-
         reading_l.append({'character':r.character_literal,
                           'reading':reading,
                           'type':r.r_type,
-                          'affix':affix,
-                          'has_okurigana':has_oku})
+                          'affix':affix})
 
 #    s = select([kd_nanori])
 #    nanori = kd_engine.execute(s)
@@ -102,8 +96,7 @@ def db_populate_kanji_readings():
 #        reading_l.append({'character':n.character_literal,
 #                          'reading':n.nanori,
 #                           'type':'nanori',
-#                           'affix':'none',
-#                           'has_okurigana':False})
+#                           'affix':'none'})
 
     r_engine.execute(reading_t.insert(), reading_l)
 
