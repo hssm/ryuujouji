@@ -70,7 +70,7 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                 print "Shouldn't be here for now."
                 return None
 
-            for cr in char_readings:              
+            for cr in char_readings:
                 first_k = cr.reading[0]
                 last_k = cr.reading[len(cr.reading)-1]
 
@@ -111,12 +111,14 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                     oku_variants.append(ri_o)
                                        
                 for v in variants:
+                    r_test = tools.kata_to_hira(reading)
+
                     (r, s, o) = v.partition(".")
                     if tools.is_kata(r[0]):
                         r = tools.kata_to_hira(r)
-                        
+
                     if o is not u'':    #has okurigana   
-                        if r == reading[:rl] and o == word_oku:
+                        if r == r_test[:rl] and o == word_oku:
                             tmp_segments = copy.copy(segments)
                             tmp_segments.append({'character':char+o,
                                              'reading':r+o,
@@ -128,7 +130,7 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                                                    index,
                                                    tmp_segments)
                         for ov in oku_variants:
-                            if r == reading[:rl] and word_oku == ov:
+                            if r == r_test[:rl] and word_oku == ov:
                                 tmp_segments = copy.copy(segments)
                                 tmp_segments.append({'character':char+o,
                                                      'reading':r+o,
@@ -140,7 +142,7 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                                                        index,
                                                        tmp_segments)
                     else:
-                        if reading.startswith(r):
+                        if r_test.startswith(r):
                             tmp_segments = copy.copy(segments)
                             tmp_segments.append({'character':char,
                                                  'reading':r,
@@ -223,8 +225,8 @@ def testme(k, r):
                 
 if __name__ == "__main__":
 #    cProfile.run('fill_solutions()', 'pstats')
-    fill_solutions()
-    print_stats()
+#    fill_solutions()
+#    print_stats()
 #    dry_run()
 #    testme(u'漢字', u'かんじ')
 #    testme(u"小牛", u"こうし")
@@ -246,27 +248,21 @@ if __name__ == "__main__":
 #    testme(u"刈り入れ人", u"かりいれびと")
 #    testme(u"日帰り", u"ひがえり")        
 #    testme(u"アリドリ科", u"ありどりか")
- 
-    testme(u"イン腹ベビー", u"インはらベイビー")
-    #testme(u"守り人", u"もりびと")
-    #testme(u"糶り", u"せり")
-    
-    #testme(u"赤鷽", u"アカウソ")
-    
-#    testme(u"働き蟻", u"はたらきあり")
-#    
-    
-#    testme(u"ヨウ素１２５", u"ようそひゃくにじゅうご")
-#    testme(u"疾く疾く", u"とくとく")
-#    testme(u"往き交い", u"いきかい")
-    
-    
-    
-    
+#    testme(u"赤鷽", u"アカウソ")
 
+ 
+
+    #testme(u"守り人", u"もりびと")
+    #testme(u"糶り", u"せり")  
+#    testme(u"働き蟻", u"はたらきあり")
+#    testme(u"往き交い", u"いきかい")    
+    
+    testme(u"疾く疾く", u"とくとく")
+#    testme(u"ヨウ素１２５", u"ようそひゃくにじゅうご")
+    
 #    testme(u"お腹", u"おなか")
 ##    testme(u"今日", u"きょう")
-
+#    testme(u"イン腹ベビー", u"インはらベイビー") #potential reading error?
 
 
 
@@ -277,6 +273,7 @@ if __name__ == "__main__":
 #p.sort_stats('time', 'cum').print_stats(.5)
 
 #last attempt
+#There are 161809 entries in JMdict. A solution has been found for 125446 of them. (77%)
 #There are 161809 entries in JMdict. A solution has been found for 123150 of them. (76%)
 #There are 161809 entries in JMdict. A solution has been found for 122567 of them. (75%)
 #There are 161809 entries in JMdict. A solution has been found for 122506 of them. (75%)

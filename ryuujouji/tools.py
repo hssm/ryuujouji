@@ -29,16 +29,22 @@ def is_kana(kana):
             return False
     return True
 
-def kata_to_hira(kata): 
+def kata_to_hira(s): 
     hira = ""
-    for char in unicode(kata):
-        hira += unichr(ord(char)-96)
+    for char in unicode(s):
+        if is_kata(char):
+            hira += unichr(ord(char)-96)
+        else:
+            hira += char
     return hira
 
-def hira_to_kata(hira): 
+def hira_to_kata(s):
     kata = ""
-    for char in unicode(hira):
-        kata += unichr(ord(char)+96)
+    for char in unicode(s):
+        if is_hira(char):
+            kata += unichr(ord(char)+96)
+        else:
+            kata += char
     return kata
 
 def has_dakuten(kana):
@@ -65,7 +71,8 @@ if __name__ == '__main__':
     print is_kana(u'バスてい')
     print is_hira(u'こんにちは')
     print is_kata(u'コンピューター')
-    
+    print is_hira(kata_to_hira(u'あえいうおアエイウオ'))
+
     #False
     print is_kana(u'abc')
     print is_kana(u'新しい')    
