@@ -24,8 +24,8 @@ select_char = select([reading_t],
 
 solutions = []
 def get_readings(word, reading):
-    """Returns a list of lists separating the word into portions of
-    [character, reading] pairs that form the word."""
+    """Returns a list of dictionaries separating the word into portions of
+    character-reading pairs that form the word."""
     
     global solutions
     solutions = []
@@ -47,7 +47,12 @@ def get_remaining_readings(word, reading, index=0, segments=None):
         char = word[0]
         if tools.is_kana(char):
             if len(reading) != 0:
-                if char == reading[0]:
+                if tools.is_kata(char) and tools.is_hira(reading[0]):
+                    test_start = tools.hira_to_kata(reading[0])
+                else:
+                    test_start = reading[0]
+            
+                if char == test_start:
                     tmp_segments = copy.copy(segments)
                     tmp_segments.append({'character':char,
                                          'reading':char,
@@ -65,7 +70,7 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                 print "Shouldn't be here for now."
                 return None
 
-            for cr in char_readings:
+            for cr in char_readings:              
                 first_k = cr.reading[0]
                 last_k = cr.reading[len(cr.reading)-1]
 
@@ -73,6 +78,7 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                 oku_variants = []
                 
                 variants.append(cr.reading)
+                
                 
                 if tools.has_dakuten(first_k):
                     d = tools.get_dakuten(first_k)
@@ -217,8 +223,8 @@ def testme(k, r):
                 
 if __name__ == "__main__":
 #    cProfile.run('fill_solutions()', 'pstats')
-#    fill_solutions()
-#    print_stats()
+    fill_solutions()
+    print_stats()
 #    dry_run()
 #    testme(u'漢字', u'かんじ')
 #    testme(u"小牛", u"こうし")
@@ -239,9 +245,22 @@ if __name__ == "__main__":
 #    testme(u"刈り手", u"かりて")    
 #    testme(u"刈り入れ人", u"かりいれびと")
 #    testme(u"日帰り", u"ひがえり")        
-
-    testme(u"守り人", u"もりびと")
-    testme(u"働き蟻", u"はたらきあり")
+#    testme(u"アリドリ科", u"ありどりか")
+ 
+    testme(u"イン腹ベビー", u"インはらベイビー")
+    #testme(u"守り人", u"もりびと")
+    #testme(u"糶り", u"せり")
+    
+    #testme(u"赤鷽", u"アカウソ")
+    
+#    testme(u"働き蟻", u"はたらきあり")
+#    
+    
+#    testme(u"ヨウ素１２５", u"ようそひゃくにじゅうご")
+#    testme(u"疾く疾く", u"とくとく")
+#    testme(u"往き交い", u"いきかい")
+    
+    
     
     
 
@@ -258,6 +277,7 @@ if __name__ == "__main__":
 #p.sort_stats('time', 'cum').print_stats(.5)
 
 #last attempt
+#There are 161809 entries in JMdict. A solution has been found for 123150 of them. (76%)
 #There are 161809 entries in JMdict. A solution has been found for 122567 of them. (75%)
 #There are 161809 entries in JMdict. A solution has been found for 122506 of them. (75%)
 #There are 161809 entries in JMdict. A solution has been found for 122286 of them. (75%)
