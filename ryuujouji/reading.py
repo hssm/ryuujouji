@@ -57,7 +57,8 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                     tmp_segments.append({'character':char,
                                          'reading':char,
                                          'reading_id':0,
-                                         'index':index})
+                                         'index':index,
+                                         'tag':'kana'})
                     index += 1
                     get_remaining_readings(word[1:], reading[1:],
                                            index, tmp_segments)
@@ -71,14 +72,18 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                 return None
 
             for cr in char_readings:
-                first_k = cr.reading[0]
-                last_k = cr.reading[len(cr.reading)-1]
-
+                print cr.reading
                 variants = []
                 oku_variants = []
                 
                 variants.append(cr.reading)
                 
+                (r, s, o) = cr.reading.partition(".")
+                rl = len(r)  #reading length (non-okurigana portion)
+                ol = len(o)  #okurigana length
+                
+                first_k = r[0]
+                last_k = r[len(r)-1]
                 
                 if tools.has_dakuten(first_k):
                     d = tools.get_dakuten(first_k)
@@ -95,17 +100,24 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                     variants.append(handaku_r)
                 
                 if last_k == u'つ' or last_k == u'ツ':
-                    soku_r = cr.reading[:-1] + tools.get_sokuon(cr.reading[-1])
-                    if tools.is_kata(soku_r[0]):
-                        soku_r = tools.kata_to_hira(soku_r)
-                    variants.append(soku_r)
+                    #there may be a case like つ.む
+                    if len(r) > 1:
+                        soku_r = r[:-1] + tools.get_sokuon(r[-1])
+                        if tools.is_kata(soku_r[0]):
+                            soku_r = tools.kata_to_hira(soku_r)
+                        variants.append(soku_r)
 
-                (r, s, o) = cr.reading.partition(".")
-                rl = len(r)  #reading length (non-okurigana portion)
-                ol = len(o)  #okurigana length
+
+                if o is not u'':
+                    oku_last_k = o[len(o)-1]
+                    if oku_last_k == u'つ':  # or last_k == u'ツ':                       
+                        soku_o = o[:-1] + tools.get_sokuon(o[-1])
+                        oku_variants.append(soku_o)
                 #the portion of the known reading we want to test as okurigana
                 word_oku = word[1:ol + 1]
                 
+                
+
                 if o.endswith(u'る'):
                     ri_o = o[:-1] + u'り'
                     oku_variants.append(ri_o)
@@ -123,7 +135,8 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                             tmp_segments.append({'character':char+o,
                                              'reading':r+o,
                                              'reading_id':cr.id,
-                                             'index':index})
+                                             'index':index,
+                                             'tag':'Okurigana: '+o})
                             index += rl+ol
                             get_remaining_readings(word[ol + 1:],
                                                    reading[ol + rl:],
@@ -135,7 +148,8 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                                 tmp_segments.append({'character':char+o,
                                                      'reading':r+o,
                                                      'reading_id':cr.id,
-                                                     'index':index})
+                                                     'index':index,
+                                                     'tag':'Okurigana became:'+ov})
                                 index += rl+ol
                                 get_remaining_readings(word[ol + 1:],
                                                        reading[ol + rl:],
@@ -147,7 +161,8 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                             tmp_segments.append({'character':char,
                                                  'reading':r,
                                                  'reading_id':cr.id,
-                                                 'index':index})
+                                                 'index':index,
+                                                 'tag':v})
                             index += 1
                             get_remaining_readings(word[1:], reading[rl:],
                                                    index, tmp_segments)
@@ -198,6 +213,7 @@ def dry_run():
         else:
             if len(segments) > 0:
                 newly_solved += 1
+                print "New found word %s" % word.keb, word.reb
     print "The changes will solve another %s entries. " % newly_solved
 
 
@@ -220,14 +236,12 @@ def testme(k, r):
     segments = get_readings(k, r)
 
     for s in segments:
-        print "%s -- %s  --  %s [index]" % (s['character'], s['reading'],
-                                             s['index'])
+        print "%s -- %s  --  %s [tag]-- %s [index]" % (s['character'], s['reading'],
+                                             s['tag'], s['index'])
                 
 if __name__ == "__main__":
 #    cProfile.run('fill_solutions()', 'pstats')
-#    fill_solutions()
-#    print_stats()
-#    dry_run()
+
 #    testme(u'漢字', u'かんじ')
 #    testme(u"小牛", u"こうし")
 #    testme(u"バス停", u"バスてい")
@@ -244,25 +258,36 @@ if __name__ == "__main__":
 #    testme(u"出席", u"しゅっせき")
 #    testme(u"結婚", u"けっこん")
 #    testme(u"分別", u"ふんべつ")   
-#    testme(u"刈り手", u"かりて")    
+        
 #    testme(u"刈り入れ人", u"かりいれびと")
 #    testme(u"日帰り", u"ひがえり")        
 #    testme(u"アリドリ科", u"ありどりか")
 #    testme(u"赤鷽", u"アカウソ")
 
  
+#    fill_solutions()
+#    print_stats()
+#    dry_run()
 
-    #testme(u"守り人", u"もりびと")
-    #testme(u"糶り", u"せり")  
-#    testme(u"働き蟻", u"はたらきあり")
-#    testme(u"往き交い", u"いきかい")    
+#    testme(u"守り人", u"もりびと")
+#    testme(u"糶り", u"せり")  
     
-    testme(u"疾く疾く", u"とくとく")
+    testme(u"刈り手", u"かりて")
+    testme(u"働き蟻", u"はたらきあり")
+    testme(u"往き交い", u"いきかい")    
+    testme(u"四日市ぜんそく", u"よっかいちぜんそく")
+#    testme(u"重立った", u"おもだった")
+    testme(u"積み卸し", u"つみおろし")
+    testme(u"包み紙", u"つつみがみ")
+
+    
+    
 #    testme(u"ヨウ素１２５", u"ようそひゃくにじゅうご")
     
 #    testme(u"お腹", u"おなか")
-##    testme(u"今日", u"きょう")
+#    testme(u"今日", u"きょう")
 #    testme(u"イン腹ベビー", u"インはらベイビー") #potential reading error?
+#    testme(u"疾く疾く", u"とくとく") #potential missing kanji reading?
 
 
 
