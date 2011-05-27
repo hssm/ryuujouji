@@ -21,7 +21,6 @@ r_engine = meta.bind
 select_char = select([reading_t],
                      reading_t.c['character']==bindparam('character'))
 
-
 solutions = []
 def get_readings(word, reading):
     """Returns a list of dictionaries separating the word into portions of
@@ -34,7 +33,6 @@ def get_readings(word, reading):
         return min(results, key=len)
     else:
         return []
-
 
 def get_remaining_readings(word, reading, index=0, segments=None):
     
@@ -72,7 +70,6 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                 return None
 
             for cr in char_readings:
-                print cr.reading
                 variants = []
                 oku_variants = []
                 
@@ -113,15 +110,15 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                     if oku_last_k == u'つ':  # or last_k == u'ツ':                       
                         soku_o = o[:-1] + tools.get_sokuon(o[-1])
                         oku_variants.append(soku_o)
+                        
+                    if tools.is_u(oku_last_k):
+                        i_o = o[:-1] + tools.u_to_i(oku_last_k)
+                        oku_variants.append(i_o)    
+                        
                 #the portion of the known reading we want to test as okurigana
                 word_oku = word[1:ol + 1]
                 
-                
-
-                if o.endswith(u'る'):
-                    ri_o = o[:-1] + u'り'
-                    oku_variants.append(ri_o)
-                                       
+               
                 for v in variants:
                     r_test = tools.kata_to_hira(reading)
 
@@ -213,7 +210,7 @@ def dry_run():
         else:
             if len(segments) > 0:
                 newly_solved += 1
-                print "New found word %s" % word.keb, word.reb
+                #print "New found word %s" % word.keb, word.reb
     print "The changes will solve another %s entries. " % newly_solved
 
 
@@ -258,46 +255,38 @@ if __name__ == "__main__":
 #    testme(u"出席", u"しゅっせき")
 #    testme(u"結婚", u"けっこん")
 #    testme(u"分別", u"ふんべつ")   
-        
 #    testme(u"刈り入れ人", u"かりいれびと")
 #    testme(u"日帰り", u"ひがえり")        
 #    testme(u"アリドリ科", u"ありどりか")
 #    testme(u"赤鷽", u"アカウソ")
-
- 
+#    testme(u"重立った", u"おもだった")
+#    testme(u"刈り手", u"かりて")
+#    testme(u"働き蟻", u"はたらきあり")
+#    testme(u"往き交い", u"いきかい")    
+#    testme(u"積み卸し", u"つみおろし")
+#    testme(u"包み紙", u"つつみがみ")
+     
 #    fill_solutions()
 #    print_stats()
 #    dry_run()
 
-#    testme(u"守り人", u"もりびと")
-#    testme(u"糶り", u"せり")  
-    
-    testme(u"刈り手", u"かりて")
-    testme(u"働き蟻", u"はたらきあり")
-    testme(u"往き交い", u"いきかい")    
-    testme(u"四日市ぜんそく", u"よっかいちぜんそく")
-#    testme(u"重立った", u"おもだった")
-    testme(u"積み卸し", u"つみおろし")
-    testme(u"包み紙", u"つつみがみ")
-
-    
+    testme(u"守り人", u"もりびと")
+    testme(u"糶り", u"せり")  
     
 #    testme(u"ヨウ素１２５", u"ようそひゃくにじゅうご")
-    
+
+    #testme(u"四日市ぜんそく", u"よっかいちぜんそく")
 #    testme(u"お腹", u"おなか")
 #    testme(u"今日", u"きょう")
 #    testme(u"イン腹ベビー", u"インはらベイビー") #potential reading error?
 #    testme(u"疾く疾く", u"とくとく") #potential missing kanji reading?
 
 
-
-
-#    print "\n\n"
-
 #p = pstats.Stats('pstats')
 #p.sort_stats('time', 'cum').print_stats(.5)
 
 #last attempt
+#There are 161809 entries in JMdict. A solution has been found for 129996 of them. (80%)
 #There are 161809 entries in JMdict. A solution has been found for 125446 of them. (77%)
 #There are 161809 entries in JMdict. A solution has been found for 123150 of them. (76%)
 #There are 161809 entries in JMdict. A solution has been found for 122567 of them. (75%)

@@ -66,6 +66,30 @@ def get_handakuten(kana):
 def get_sokuon(kana):
     return unichr(ord(kana)-1)
 
+def is_u(char):
+    if char in [u'す',u'く', u'ぐ', u'む', u'ぶ', u'ぬ', u'る', u'う', u'つ']:
+        return True
+    
+def u_to_i(char):
+    if char == u'す':
+        return u'し'
+    elif char == u'く':
+        return u'き'
+    elif char == u'ぐ':
+        return u'ぎ'
+    elif char == u'む':
+        return u'み'
+    elif char == u'ぶ':
+        return u'び'
+    elif char == u'ぬ':
+        return u'に'
+    elif char == u'る':
+        return u'り'
+    elif char == u'う':
+        return u'い'
+    elif char == u'つ':
+        return u'ち'
+    
 if __name__ == '__main__':
     #True
     print is_kana(u'バスてい')
