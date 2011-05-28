@@ -28,6 +28,13 @@ def get_readings(word, reading):
     
     global solutions
     solutions = []
+    
+    #replace all 々 with their respective kanji
+    if word[0] != u'々': #it could be just that character and its name(s) 
+        for i,k in enumerate(word):
+            if k == u'々':
+                word = word.replace(u'々', word[i-1], 1)
+    
     results = get_remaining_readings(word, reading)
     if len(results) > 0:
         return min(results, key=len)
@@ -284,16 +291,18 @@ if __name__ == "__main__":
 #    testme(u"包み紙", u"つつみがみ")
 #    testme(u"守り人", u"もりびと")
 #    testme(u"糶り", u"せり")       
-
+#    testme(u"バージョン", u"バージョン")
     fill_solutions()
     print_stats()
 #    dry_run()
 
 #    testme(u"日本刀", u"にほんとう")
     
+    
+    testme(u"全国津々浦々", u"ぜんこくつつうらうら")
     testme(u"酒機嫌", u"ささきげん")
     testme(u"シリアルＡＴＡ", u"シリアルエーティーエー")
-    testme(u"バージョン", u"バージョン")
+
 
 
     #testme(u"四日市ぜんそく", u"よっかいちぜんそく")
@@ -307,4 +316,5 @@ if __name__ == "__main__":
 #p.sort_stats('time', 'cum').print_stats(.5)
 
 #last attempt
+#There are 157902 entries in JMdict. A solution has been found for 130422 of them. (82%)
 #There are 157902 entries in JMdict. A solution has been found for 129816 of them. (82%)
