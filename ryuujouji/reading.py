@@ -69,8 +69,9 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                 print "Shouldn't be here for now."
                 return None
 
+            print 'char = ', char
             for cr in char_readings:
-                #print cr.reading
+                print cr.reading
                 variants = []
                 oku_variants = []
                 
@@ -105,7 +106,6 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                             soku_r = tools.kata_to_hira(soku_r)
                         variants.append(soku_r)
 
-
                 if o is not u'':
                     oku_last_k = o[len(o)-1]
                     if oku_last_k == u'つ':  # or last_k == u'ツ':                       
@@ -116,10 +116,9 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                         i_o = o[:-1] + tools.u_to_i(oku_last_k)
                         oku_variants.append(i_o)    
                         
-                #the portion of the known reading we want to test as okurigana
+                #the portion of the known word we want to test as okurigana
                 word_oku = word[1:ol + 1]
                 
-               
                 for v in variants:
                     r_test = tools.kata_to_hira(reading)
 
@@ -155,7 +154,7 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                                                        tmp_segments)
                     else:
                         if r_test.startswith(r):
-
+                            #This branch for regular words and readings.
                             tmp_segments = copy.copy(segments)
                             tmp_segments.append({'character':char,
                                                  'reading':r,
@@ -165,6 +164,8 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                             index += 1
                             get_remaining_readings(word[1:], reading[rl:],
                                                    index, tmp_segments)
+                            
+                            #This branch for words like 守り人 = もりびと
                             if len(word) > 1:
                                 part_kana = word[1]
 
@@ -226,7 +227,7 @@ def dry_run():
         else:
             if len(segments) > 0:
                 newly_solved += 1
-                print "New found word %s" % word.keb, word.reb
+                #print "New found word %s" % word.keb, word.reb
     print "The changes will solve another %s entries. " % newly_solved
 
 
@@ -284,13 +285,16 @@ if __name__ == "__main__":
 #    testme(u"守り人", u"もりびと")
 #    testme(u"糶り", u"せり")       
 
-    fill_solutions()
-    print_stats()
-#   dry_run()
+#    fill_solutions()
+#    print_stats()
+#    dry_run()
 
-    testme(u"日本刀", u"にほんとう")
+#    testme(u"日本刀", u"にほんとう")
     
-#    testme(u"ヨウ素１２５", u"ようそひゃくにじゅうご")
+    testme(u"シリアルＡＴＡ", u"シリアルエーティーエー")
+    testme(u"酒機嫌", u"ささきげん")
+    testme(u"バージョン ", u"バージョン ")
+
 
     #testme(u"四日市ぜんそく", u"よっかいちぜんそく")
 #    testme(u"お腹", u"おなか")

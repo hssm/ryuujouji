@@ -4,6 +4,7 @@
 
 import os
 import time
+import codecs
 from sqlalchemy import create_engine, Table, Column, Unicode, \
                        String, Boolean, Integer, ForeignKey, MetaData
 from sqlalchemy.sql import select, and_, or_
@@ -11,6 +12,7 @@ from sqlalchemy.sql import select, and_, or_
 READINGS_PATH = "../dbs/readings.sqlite"
 JMDICT_PATH = "../dbs/jmdict.sqlite"
 KANJIDIC_PATH = "../dbs/kanjidic.sqlite"
+ROMAN_READINGS_PATH = "../dbs/roman_readings"
 
 #readings
 r_meta = MetaData()
@@ -50,6 +52,11 @@ def init():
             print "No jmdict database found at %s" % KANJIDIC_PATH
             print "Cannot continue without it."
             return
+        if not os.path.exists(ROMAN_READINGS_PATH):
+            print "No roman_readings file found at %s" % ROMAN_READINGS_PATH
+            print "Cannot continue without it."
+            return            
+            
         r_engine = create_engine('sqlite:///' + READINGS_PATH)
         r_meta.create_all(r_engine)       
         db_populate_kanji_readings()
@@ -64,10 +71,8 @@ def db_populate_kanji_readings():
     kd_meta = MetaData()
     kd_meta.bind = kd_engine
     kd_meta.reflect()
-
     kd_reading = kd_meta.tables['reading']
-    kd_nanori = kd_meta.tables['nanori']
-
+    
     reading_l = []
     start = time.time()
 
@@ -89,15 +94,13 @@ def db_populate_kanji_readings():
                           'type':r.r_type,
                           'affix':affix})
 
-#    s = select([kd_nanori])
-#    nanori = kd_engine.execute(s)
-#
-#    for n in nanori:
-#        reading_l.append({'character':n.character_literal,
-#                          'reading':n.nanori,
-#                           'type':'nanori',
-#                           'affix':'none'})
-
+    f = codecs.open(ROMAN_READINGS_PATH, encoding='utf-8')
+    for line in f:
+        line = line.strip('\n')
+        (k, s, r) = line.partition(",")
+        reading_l.append({'character':k, 'reading':r, 'type':'roman',
+                          'affix':'none'})
+        
     r_engine.execute(reading_t.insert(), reading_l)
 
     print 'Filling database with kanji/reading data took '\
@@ -123,7 +126,7 @@ def db_populate_words():
     
     for word in words:
         word_l.append({'keb':word.keb, 'reb':word.reb, 'found':False})
-    
+        
     r_engine.execute(word_t.insert(), word_l)
     print 'Filling database with word/reading data took '\
             '%s seconds' % (time.time() - start)
