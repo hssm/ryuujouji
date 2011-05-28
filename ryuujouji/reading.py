@@ -70,6 +70,7 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                 return None
 
             for cr in char_readings:
+                #print cr.reading
                 variants = []
                 oku_variants = []
                 
@@ -154,6 +155,7 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                                                        tmp_segments)
                     else:
                         if r_test.startswith(r):
+
                             tmp_segments = copy.copy(segments)
                             tmp_segments.append({'character':char,
                                                  'reading':r,
@@ -163,6 +165,20 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                             index += 1
                             get_remaining_readings(word[1:], reading[rl:],
                                                    index, tmp_segments)
+                            if len(word) > 1:
+                                part_kana = word[1]
+
+                                if tools.is_kana(part_kana) and part_kana == reading[rl-1]:
+                                    
+                                    tmp_segments = copy.copy(segments)
+                                    tmp_segments.append({'character':char,
+                                                         'reading':r,
+                                                         'reading_id':cr.id,
+                                                         'index':index,
+                                                         'tag':v})
+                                    index += 1                                   
+                                    get_remaining_readings(word[2:], reading[rl:],
+                                                           index, tmp_segments)
 
     return solutions
 
@@ -210,7 +226,7 @@ def dry_run():
         else:
             if len(segments) > 0:
                 newly_solved += 1
-                #print "New found word %s" % word.keb, word.reb
+                print "New found word %s" % word.keb, word.reb
     print "The changes will solve another %s entries. " % newly_solved
 
 
@@ -265,13 +281,14 @@ if __name__ == "__main__":
 #    testme(u"往き交い", u"いきかい")    
 #    testme(u"積み卸し", u"つみおろし")
 #    testme(u"包み紙", u"つつみがみ")
-     
-#    fill_solutions()
-#    print_stats()
-#    dry_run()
+#    testme(u"守り人", u"もりびと")
+#    testme(u"糶り", u"せり")       
 
-    testme(u"守り人", u"もりびと")
-    testme(u"糶り", u"せり")  
+    fill_solutions()
+    print_stats()
+#   dry_run()
+
+    testme(u"日本刀", u"にほんとう")
     
 #    testme(u"ヨウ素１２５", u"ようそひゃくにじゅうご")
 
@@ -280,12 +297,14 @@ if __name__ == "__main__":
 #    testme(u"今日", u"きょう")
 #    testme(u"イン腹ベビー", u"インはらベイビー") #potential reading error?
 #    testme(u"疾く疾く", u"とくとく") #potential missing kanji reading?
+#    testme(u"当り", u"あたり")
 
 
 #p = pstats.Stats('pstats')
 #p.sort_stats('time', 'cum').print_stats(.5)
 
 #last attempt
+#There are 161809 entries in JMdict. A solution has been found for 130329 of them. (80%)
 #There are 161809 entries in JMdict. A solution has been found for 129996 of them. (80%)
 #There are 161809 entries in JMdict. A solution has been found for 125446 of them. (77%)
 #There are 161809 entries in JMdict. A solution has been found for 123150 of them. (76%)
