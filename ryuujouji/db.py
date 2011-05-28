@@ -114,19 +114,30 @@ def db_populate_words():
     jd_meta.bind = jd_engine
     jd_meta.reflect()
 
+    entry = jd_meta.tables['entry']
     k_ele = jd_meta.tables['k_ele']
     r_ele = jd_meta.tables['r_ele']
+    re_restr = jd_meta.tables['re_restr']
 
     word_l = []
     start = time.time()
-
-    s = select([k_ele, r_ele],
-                k_ele.c['entry_ent_seq'] == r_ele.c['entry_ent_seq'])
-    words = jd_engine.execute(s)
+ 
+    s = select([r_ele])
+    rs = jd_engine.execute(s)
     
-    for word in words:
-        word_l.append({'keb':word.keb, 'reb':word.reb, 'found':False})
-        
+    for r in rs:
+        s = select([re_restr], re_restr.c['r_ele_id']==r.id)
+        restrs = jd_engine.execute(s).fetchall()
+        if len(restrs) > 0:
+            for restr in restrs:
+                word_l.append({'keb':restr.re_restr, 'reb':r.reb, 'found':False})
+        else: #reb applies to all kebs in its entry
+            s = select([k_ele], k_ele.c['entry_ent_seq']==r.entry_ent_seq)
+            ks = jd_engine.execute(s)
+            for k in ks:
+                word_l.append({'keb':k.keb, 'reb':r.reb, 'found':False})
+
+
     r_engine.execute(word_t.insert(), word_l)
     print 'Filling database with word/reading data took '\
             '%s seconds' % (time.time() - start)

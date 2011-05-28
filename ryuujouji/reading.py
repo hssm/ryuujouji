@@ -69,9 +69,7 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                 print "Shouldn't be here for now."
                 return None
 
-            print 'char = ', char
             for cr in char_readings:
-                print cr.reading
                 variants = []
                 oku_variants = []
                 
@@ -160,12 +158,14 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                                                  'reading':r,
                                                  'reading_id':cr.id,
                                                  'index':index,
-                                                 'tag':v})
+                                                 'tag':'regular'})
                             index += 1
                             get_remaining_readings(word[1:], reading[rl:],
                                                    index, tmp_segments)
                             
-                            #This branch for words like 守り人 = もりびと
+                            #This branch is for words like 守り人 = もりびと
+                            #The り is part of the reading for 守 but isn't
+                            #okurigana.
                             if len(word) > 1:
                                 part_kana = word[1]
 
@@ -176,7 +176,7 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                                                          'reading':r,
                                                          'reading_id':cr.id,
                                                          'index':index,
-                                                         'tag':v})
+                                                         'tag':'trailing kana'})
                                     index += 1                                   
                                     get_remaining_readings(word[2:], reading[rl:],
                                                            index, tmp_segments)
@@ -285,21 +285,20 @@ if __name__ == "__main__":
 #    testme(u"守り人", u"もりびと")
 #    testme(u"糶り", u"せり")       
 
-#    fill_solutions()
-#    print_stats()
+    fill_solutions()
+    print_stats()
 #    dry_run()
 
 #    testme(u"日本刀", u"にほんとう")
     
-    testme(u"シリアルＡＴＡ", u"シリアルエーティーエー")
     testme(u"酒機嫌", u"ささきげん")
-    testme(u"バージョン ", u"バージョン ")
+    testme(u"シリアルＡＴＡ", u"シリアルエーティーエー")
+    testme(u"バージョン", u"バージョン")
 
 
     #testme(u"四日市ぜんそく", u"よっかいちぜんそく")
 #    testme(u"お腹", u"おなか")
 #    testme(u"今日", u"きょう")
-#    testme(u"イン腹ベビー", u"インはらベイビー") #potential reading error?
 #    testme(u"疾く疾く", u"とくとく") #potential missing kanji reading?
 #    testme(u"当り", u"あたり")
 
@@ -308,17 +307,4 @@ if __name__ == "__main__":
 #p.sort_stats('time', 'cum').print_stats(.5)
 
 #last attempt
-#There are 161809 entries in JMdict. A solution has been found for 130329 of them. (80%)
-#There are 161809 entries in JMdict. A solution has been found for 129996 of them. (80%)
-#There are 161809 entries in JMdict. A solution has been found for 125446 of them. (77%)
-#There are 161809 entries in JMdict. A solution has been found for 123150 of them. (76%)
-#There are 161809 entries in JMdict. A solution has been found for 122567 of them. (75%)
-#There are 161809 entries in JMdict. A solution has been found for 122506 of them. (75%)
-#There are 161809 entries in JMdict. A solution has been found for 122286 of them. (75%)
-#There are 161809 entries in JMdict. A solution has been found for 121805 of them. (75%)
-#There are 161809 entries in JMdict. A solution has been found for 120073 of them. (74%)
-#There are 161809 entries in JMdict. A solution has been found for 115877 of them. (71%)
-#There are 161809 entries in JMdict. A solution has been found for 114528 of them. (70%)
-#There are 161809 entries in JMdict. A solution has been found for 111607 of them. (68%)
-#There are 161809 entries in JMdict. A solution has been found for 107847 of them. (66%)
-
+#There are 157902 entries in JMdict. A solution has been found for 129816 of them. (82%)
