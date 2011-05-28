@@ -10,16 +10,16 @@ KANJIDIC_PATH = "../dbs/kanjidic.sqlite"
 
 def dump_readings():
     print "Dumping kanji/reading data..."
-    kd_engine = create_engine('sqlite:///' + KANJIDIC_PATH)
-    kd_meta = MetaData()
-    kd_meta.bind = kd_engine
-    kd_meta.reflect()
+    engine = create_engine('sqlite:///' + KANJIDIC_PATH)
+    meta = MetaData()
+    meta.bind = engine
+    meta.reflect()
 
-    kd_reading = kd_meta.tables['reading']
+    reading = meta.tables['reading']
 
-    s = select([kd_reading], or_(kd_reading.c['r_type'] == 'ja_on',
-                                 kd_reading.c['r_type'] == 'ja_kun'))
-    readings = kd_engine.execute(s)
+    s = select([reading], or_(reading.c['r_type'] == 'ja_on',
+                                 reading.c['r_type'] == 'ja_kun'))
+    readings = engine.execute(s)
     f = open('kanji_readings', 'w')
     for r in readings:
         f.write(r.character_literal + ',' +r.reading + '\n')
