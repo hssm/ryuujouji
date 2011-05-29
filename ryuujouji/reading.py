@@ -316,5 +316,6 @@ if __name__ == "__main__":
 #p.sort_stats('time', 'cum').print_stats(.5)
 
 #last attempt
+#There are 157902 entries in JMdict. A solution has been found for 130623 of them. (82%)
 #There are 157902 entries in JMdict. A solution has been found for 130422 of them. (82%)
 #There are 157902 entries in JMdict. A solution has been found for 129816 of them. (82%)

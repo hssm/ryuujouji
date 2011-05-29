@@ -12,7 +12,7 @@ from sqlalchemy.sql import select, and_, or_
 READINGS_PATH = "../dbs/readings.sqlite"
 JMDICT_PATH = "../dbs/jmdict.sqlite"
 KANJIDIC_PATH = "../dbs/kanjidic.sqlite"
-ROMAN_READINGS_PATH = "../dbs/roman_readings"
+OTHER_READINGS_PATH = "../dbs/other_readings"
 
 #readings
 r_meta = MetaData()
@@ -52,8 +52,8 @@ def init():
             print "No jmdict database found at %s" % KANJIDIC_PATH
             print "Cannot continue without it."
             return
-        if not os.path.exists(ROMAN_READINGS_PATH):
-            print "No roman_readings file found at %s" % ROMAN_READINGS_PATH
+        if not os.path.exists(OTHER_READINGS_PATH):
+            print "No roman_readings file found at %s" % OTHER_READINGS_PATH
             print "Cannot continue without it."
             return            
             
@@ -94,11 +94,11 @@ def db_populate_kanji_readings():
                           'type':r.r_type,
                           'affix':affix})
 
-    f = codecs.open(ROMAN_READINGS_PATH, encoding='utf-8')
+    f = codecs.open(OTHER_READINGS_PATH, encoding='utf-8')
     for line in f:
         line = line.strip('\n')
         (k, s, r) = line.partition(",")
-        reading_l.append({'character':k, 'reading':r, 'type':'roman',
+        reading_l.append({'character':k, 'reading':r, 'type':'other',
                           'affix':'none'})
         
     r_engine.execute(reading_t.insert(), reading_l)
