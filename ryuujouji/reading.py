@@ -48,6 +48,8 @@ def get_remaining_readings(word, reading, index=0, segments=None):
 
     if len(word) == 0:
         solutions.append(segments)
+    elif len(reading) == 0: #exhausted reading but still part of word left
+        return
     else:
         char = word[0]
         if tools.is_kana(char):
@@ -77,6 +79,7 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                 return None
 
             for cr in char_readings:
+                #print cr.reading
                 variants = []
                 oku_variants = []
                 
@@ -92,23 +95,23 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                 if tools.has_dakuten(first_k):
                     d = tools.get_dakuten(first_k)
                     daku_r = d + cr.reading[1:]
-                    if tools.is_kata(daku_r[0]):
-                        daku_r = tools.kata_to_hira(daku_r)
+                    #if tools.is_kata(daku_r[0]):
+                    #    daku_r = tools.kata_to_hira(daku_r)
                     variants.append(daku_r)
                                        
                 if tools.has_handakuten(first_k):
                     d = tools.get_handakuten(first_k)
                     handaku_r = d + cr.reading[1:]
-                    if tools.is_kata(handaku_r[0]):
-                        handaku_r = tools.kata_to_hira(handaku_r)
+                    #if tools.is_kata(handaku_r[0]):
+                    #    handaku_r = tools.kata_to_hira(handaku_r)
                     variants.append(handaku_r)
                 
                 if last_k == u'つ' or last_k == u'ツ':
-                    #there may be a case like つ.む
+                    #there may be a case like つ.む == つ
                     if len(r) > 1:
                         soku_r = r[:-1] + tools.get_sokuon(r[-1])
-                        if tools.is_kata(soku_r[0]):
-                            soku_r = tools.kata_to_hira(soku_r)
+                        #if tools.is_kata(soku_r[0]):
+                        #    soku_r = tools.kata_to_hira(soku_r)
                         variants.append(soku_r)
 
                 if o is not u'':
@@ -125,14 +128,15 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                 word_oku = word[1:ol + 1]
                 
                 for v in variants:
-                    r_test = tools.kata_to_hira(reading)
+                    r_test = reading[:rl]
 
                     (r, s, o) = v.partition(".")
-                    if tools.is_kata(r[0]):
-                        r = tools.kata_to_hira(r)
-
+                    if not (tools.is_kata(r[0]) and tools.is_kata(r_test[0])):
+                        r_test = tools.kata_to_hira(r_test)
+                        r = tools.kata_to_hira(r) 
+                        
                     if o is not u'':    #has okurigana   
-                        if r == r_test[:rl] and o == word_oku:
+                        if r == r_test and o == word_oku:
                             tmp_segments = copy.copy(segments)
                             tmp_segments.append({'character':char+o,
                                              'reading':r+o,
@@ -145,7 +149,7 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                                                    index,
                                                    tmp_segments)
                         for ov in oku_variants:
-                            if r == r_test[:rl] and word_oku == ov:
+                            if r == r_test and word_oku == ov:
                                 tmp_segments = copy.copy(segments)
                                 tmp_segments.append({'character':char+o,
                                                      'reading':r+o,
@@ -162,7 +166,7 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                             #This branch for regular words and readings.
                             tmp_segments = copy.copy(segments)
                             tmp_segments.append({'character':char,
-                                                 'reading':r,
+                                                 'reading':reading[:rl],
                                                  'reading_id':cr.id,
                                                  'index':index,
                                                  'tag':'regular'})
@@ -275,8 +279,8 @@ if __name__ == "__main__":
 #    testme(u"人人", u"ひとびと")
 #    testme(u"岸壁", u"がんぺき")
 #    testme(u"一つ", u"ひとつ")
-#    testme(u"別荘", u"べっそう")
-#    testme(u"出席", u"しゅっせき")
+    testme(u"別荘", u"べっそう")
+    testme(u"出席", u"しゅっせき")
 #    testme(u"結婚", u"けっこん")
 #    testme(u"分別", u"ふんべつ")   
 #    testme(u"刈り入れ人", u"かりいれびと")
@@ -292,15 +296,17 @@ if __name__ == "__main__":
 #    testme(u"守り人", u"もりびと")
 #    testme(u"糶り", u"せり")       
 #    testme(u"バージョン", u"バージョン")
-    fill_solutions()
-    print_stats()
+#    fill_solutions()
+#    print_stats()
+
+#    testme(u"空白デリミター", u"くウハくデリミター")       
 #    dry_run()
 
 #    testme(u"日本刀", u"にほんとう")
     
     
-    testme(u"全国津々浦々", u"ぜんこくつつうらうら")
-    testme(u"酒機嫌", u"ささきげん")
+#    testme(u"全国津々浦々", u"ぜんこくつつうらうら")
+#    testme(u"酒機嫌", u"ささきげん")
     testme(u"シリアルＡＴＡ", u"シリアルエーティーエー")
 
 
