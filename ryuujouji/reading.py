@@ -11,6 +11,12 @@ from sqlalchemy.sql import select, and_, or_, bindparam
 import tools
 import db
 
+
+#Segment type tags
+class SegmentType:
+    Kana, Regular, Dakuten, Handakuten, Sokuon, Kana_trail, Oku, Oku_Sokuon,\
+    Oku_u_i = range(9)
+    
 meta = db.get_meta()
 meta.reflect()
 reading_t = meta.tables['reading']
@@ -30,7 +36,7 @@ def get_readings(word, reading):
     solutions = []
     
     #replace all 々 with their respective kanji
-    if word[0] != u'々': #it could be just that character and its name(s) 
+    if word[0] != u'々': #it could be just that character and its name(s)
         for i,k in enumerate(word):
             if k == u'々':
                 word = word.replace(u'々', word[i-1], 1)
@@ -62,10 +68,10 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                 if char == test_start:
                     tmp_segments = copy.copy(segments)
                     tmp_segments.append({'character':char,
-                                         'reading':char,
+                                         'reading_part':char,
                                          'reading_id':0,
                                          'index':index,
-                                         'tag':'kana'})
+                                         'tag':SegmentType.Kana})
                     index += 1
                     get_remaining_readings(word[1:], reading[1:],
                                            index, tmp_segments)
@@ -83,7 +89,7 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                 variants = []
                 oku_variants = []
                 
-                variants.append(cr.reading)
+                variants.append([cr.reading, SegmentType.Regular])
                 
                 (r, s, o) = cr.reading.partition(".")
                 rl = len(r)  #reading length (non-okurigana portion)
@@ -95,41 +101,36 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                 if tools.has_dakuten(first_k):
                     d = tools.get_dakuten(first_k)
                     daku_r = d + cr.reading[1:]
-                    #if tools.is_kata(daku_r[0]):
-                    #    daku_r = tools.kata_to_hira(daku_r)
-                    variants.append(daku_r)
+                    variants.append([daku_r, SegmentType.Dakuten])
                                        
                 if tools.has_handakuten(first_k):
                     d = tools.get_handakuten(first_k)
                     handaku_r = d + cr.reading[1:]
-                    #if tools.is_kata(handaku_r[0]):
-                    #    handaku_r = tools.kata_to_hira(handaku_r)
-                    variants.append(handaku_r)
+                    variants.append([handaku_r, SegmentType.Handakuten])
                 
                 if last_k == u'つ' or last_k == u'ツ':
                     #there may be a case like つ.む == つ
                     if len(r) > 1:
                         soku_r = r[:-1] + tools.get_sokuon(r[-1])
-                        #if tools.is_kata(soku_r[0]):
-                        #    soku_r = tools.kata_to_hira(soku_r)
-                        variants.append(soku_r)
+                        variants.append([soku_r, SegmentType.Sokuon])
 
                 if o is not u'':
                     oku_last_k = o[len(o)-1]
                     if oku_last_k == u'つ':  # or last_k == u'ツ':                       
                         soku_o = o[:-1] + tools.get_sokuon(o[-1])
-                        oku_variants.append(soku_o)
+                        oku_variants.append([soku_o, SegmentType.Oku_Sokuon])
                         
                     if tools.is_u(oku_last_k):
                         i_o = o[:-1] + tools.u_to_i(oku_last_k)
-                        oku_variants.append(i_o)    
+                        oku_variants.append([i_o, SegmentType.Oku_u_i])    
                         
                 #the portion of the known word we want to test as okurigana
                 word_oku = word[1:ol + 1]
                 
-                for v in variants:
+                for variant in variants:
                     r_test = reading[:rl]
-
+                    
+                    v = variant[0]
                     (r, s, o) = v.partition(".")
                     if not (tools.is_kata(r[0]) and tools.is_kata(r_test[0])):
                         r_test = tools.kata_to_hira(r_test)
@@ -139,23 +140,24 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                         if r == r_test and o == word_oku:
                             tmp_segments = copy.copy(segments)
                             tmp_segments.append({'character':char+o,
-                                             'reading':r+o,
+                                             'reading_part':r+o,
                                              'reading_id':cr.id,
                                              'index':index,
-                                             'tag':'Okurigana: '+o})
+                                             'tag':variant[1]})
                             index += rl+ol
                             get_remaining_readings(word[ol + 1:],
                                                    reading[ol + rl:],
                                                    index,
                                                    tmp_segments)
-                        for ov in oku_variants:
+                        for oku_var in oku_variants:
+                            ov = oku_var[0]
                             if r == r_test and word_oku == ov:
                                 tmp_segments = copy.copy(segments)
                                 tmp_segments.append({'character':char+o,
-                                                     'reading':r+o,
+                                                     'reading_part':r+o,
                                                      'reading_id':cr.id,
                                                      'index':index,
-                                                     'tag':'Okurigana became:'+ov})
+                                                     'tag':variant[1]})
                                 index += rl+ol
                                 get_remaining_readings(word[ol + 1:],
                                                        reading[ol + rl:],
@@ -166,10 +168,10 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                             #This branch for regular words and readings.
                             tmp_segments = copy.copy(segments)
                             tmp_segments.append({'character':char,
-                                                 'reading':reading[:rl],
+                                                 'reading_part':reading[:rl],
                                                  'reading_id':cr.id,
                                                  'index':index,
-                                                 'tag':'regular'})
+                                                 'tag':variant[1]})
                             index += 1
                             get_remaining_readings(word[1:], reading[rl:],
                                                    index, tmp_segments)
@@ -179,15 +181,14 @@ def get_remaining_readings(word, reading, index=0, segments=None):
                             #okurigana.
                             if len(word) > 1:
                                 part_kana = word[1]
-
                                 if tools.is_kana(part_kana) and part_kana == reading[rl-1]:
                                     
                                     tmp_segments = copy.copy(segments)
                                     tmp_segments.append({'character':char,
-                                                         'reading':r,
+                                                         'reading_part':r,
                                                          'reading_id':cr.id,
                                                          'index':index,
-                                                         'tag':'trailing kana'})
+                                                         'tag':variant[1]})
                                     index += 1                                   
                                     get_remaining_readings(word[2:], reading[rl:],
                                                            index, tmp_segments)
@@ -261,8 +262,9 @@ def testme(k, r):
     segments = get_readings(k, r)
 
     for s in segments:
-        print "%s -- %s  --  %s [tag]-- %s [index]" % (s['character'], s['reading'],
-                                             s['tag'], s['index'])
+        print "%s -- %s  --  %s [tag]-- %s [index]" % (s['character'],
+                                                       s['reading_part'],
+                                                       s['tag'], s['index'])
                 
 if __name__ == "__main__":
 #    cProfile.run('fill_solutions()', 'pstats')
@@ -279,8 +281,8 @@ if __name__ == "__main__":
 #    testme(u"人人", u"ひとびと")
 #    testme(u"岸壁", u"がんぺき")
 #    testme(u"一つ", u"ひとつ")
-    testme(u"別荘", u"べっそう")
-    testme(u"出席", u"しゅっせき")
+#    testme(u"別荘", u"べっそう")
+#    testme(u"出席", u"しゅっせき")
 #    testme(u"結婚", u"けっこん")
 #    testme(u"分別", u"ふんべつ")   
 #    testme(u"刈り入れ人", u"かりいれびと")
@@ -296,8 +298,10 @@ if __name__ == "__main__":
 #    testme(u"守り人", u"もりびと")
 #    testme(u"糶り", u"せり")       
 #    testme(u"バージョン", u"バージョン")
+#    testme(u"シリアルＡＴＡ", u"シリアルエーティーエー")
+
 #    fill_solutions()
-#    print_stats()
+    print_stats()
 
 #    testme(u"空白デリミター", u"くウハくデリミター")       
 #    dry_run()
@@ -307,7 +311,7 @@ if __name__ == "__main__":
     
 #    testme(u"全国津々浦々", u"ぜんこくつつうらうら")
 #    testme(u"酒機嫌", u"ささきげん")
-    testme(u"シリアルＡＴＡ", u"シリアルエーティーエー")
+
 
 
 
