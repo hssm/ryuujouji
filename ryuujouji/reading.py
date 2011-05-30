@@ -124,7 +124,7 @@ def solve_character(char, word, reading, index, segments):
         ol = len(o)  #okurigana length
 
         s = Segment(SegmentTag.Regular, char, index, cr.reading, cr.id,
-                    reading[:rl+ol], 'Regular character reading: '+cr.reading)
+                    reading[:rl+ol], 'Regular character reading: '+cr.reading[:rl])
         variants.append([cr.reading, s])
         
         first_k = r[0]
@@ -151,13 +151,13 @@ def solve_character(char, word, reading, index, segments):
         if last_k == u'つ' or last_k == u'ツ':
             if len(r) > 1: #there may be a case like つ.む == つ
                 soku_r = r[:-1] + tools.get_sokuon(r[-1])
-                info = 'The last reading character, つ, became a っ (sokuon). '\
+                info = 'The last character, つ, became a っ (sokuon). '\
                         '%s became %s.' % (cr.reading[:rl], soku_r)
                 s = Segment(SegmentTag.Sokuon, char, index, cr.reading, cr.id,
                             reading[:rl+ol], info)
                 variants.append([soku_r, s])
 
-        if o is not u'':
+        if o is not u'':           
             oku_last_k = o[len(o)-1]
             if oku_last_k == u'つ':  # or last_k == u'ツ':                       
                 soku_o = o[:-1] + u'っ'
@@ -192,6 +192,9 @@ def solve_character(char, word, reading, index, segments):
             if o is not u'':
                 #Try standard okurigana   
                 if r == known_r and o == known_oku:
+                    os = SegmentOku(SegmentOkuTag.Regular, o,
+                                    'Regular Okurigana: %s' % o )
+                    seg.oku_segment = os
                     base = copy.copy(segments)
                     base.append(seg)
                     index += rl+ol
@@ -204,7 +207,7 @@ def solve_character(char, word, reading, index, segments):
                     if r == known_r and known_oku == ov:
                         base = copy.copy(segments)
                         #Attach okurigana segment to base segment
-                        seg.oku_segment = oku_var
+                        seg.oku_segment = oseg
                         base.append(seg)
                         index += rl+ol
                         solve_reading(word[ol+1:], reading[ol+rl:], index, base)
@@ -326,38 +329,41 @@ def testme(k, r):
         print 'index[%s]' % s.index,
         print 'tag[%s]' % s.tag,
         print 'dic_reading[%s]' % s.dic_reading,
-        print 'reading_id[%s]' % s.reading_id
-        
-
-
-                
+        print 'reading_id[%s]' % s.reading_id,
+        print 'info[%s]' % s.info,
+        if s.oku_segment is not None:
+            print 'oku_reading[%s]' % s.oku_segment.reading,
+            print 'oku_info[%s]' % s.oku_segment.info
+        else:
+            print
+                        
 if __name__ == "__main__":
 
-#
-#    testme(u'漢字', u'かんじ')
-#    testme(u"小牛", u"こうし")
-#    testme(u"バス停", u"バスてい")
-#    testme(u"非常事態", u"ひじょうじたい")
-#    testme(u"建て替える", u"たてかえる")
-#    testme(u"小さい", u"ちいさい")
-#    testme(u"鉄道公安官", u"てつどうこうあんかん")
-#    testme(u"手紙", u"てがみ")
-#    testme(u"筆箱", u"ふでばこ")
-#    testme(u"人人", u"ひとびと")
-#    testme(u"岸壁", u"がんぺき")
-#    testme(u"一つ", u"ひとつ")
-#    testme(u"別荘", u"べっそう")
-#    testme(u"出席", u"しゅっせき")
-#    testme(u"結婚", u"けっこん")
-#    testme(u"分別", u"ふんべつ")   
-#    testme(u"刈り入れ人", u"かりいれびと")
-#    testme(u"日帰り", u"ひがえり")        
-#    testme(u"アリドリ科", u"ありどりか")
-#    testme(u"赤鷽", u"アカウソ")
-#    testme(u"重立った", u"おもだった")
-#    testme(u"刈り手", u"かりて")
-#    testme(u"働き蟻", u"はたらきあり")
-#    testme(u"往き交い", u"いきかい")    
+
+    testme(u'漢字', u'かんじ')
+    testme(u"小牛", u"こうし")
+    testme(u"バス停", u"バスてい")
+    testme(u"非常事態", u"ひじょうじたい")
+    testme(u"建て替える", u"たてかえる")
+    testme(u"小さい", u"ちいさい")
+    testme(u"鉄道公安官", u"てつどうこうあんかん")
+    testme(u"手紙", u"てがみ")
+    testme(u"筆箱", u"ふでばこ")
+    testme(u"人人", u"ひとびと")
+    testme(u"岸壁", u"がんぺき")
+    testme(u"一つ", u"ひとつ")
+    testme(u"別荘", u"べっそう")
+    testme(u"出席", u"しゅっせき")
+    testme(u"結婚", u"けっこん")
+    testme(u"分別", u"ふんべつ")   
+    testme(u"刈り入れ人", u"かりいれびと")
+    testme(u"日帰り", u"ひがえり")        
+    testme(u"アリドリ科", u"ありどりか")
+    testme(u"赤鷽", u"アカウソ")
+    testme(u"重立った", u"おもだった")
+    testme(u"刈り手", u"かりて")
+    testme(u"働き蟻", u"はたらきあり")
+    testme(u"往き交い", u"いきかい")    
     testme(u"積み卸し", u"つみおろし")
     testme(u"包み紙", u"つつみがみ")
     testme(u"守り人", u"もりびと")
@@ -365,8 +371,8 @@ if __name__ == "__main__":
     testme(u"バージョン", u"バージョン")
     testme(u"シリアルＡＴＡ", u"シリアルエーティーエー")
 
-    fill_solutions() 
-    print_stats()
+#    fill_solutions() 
+#    print_stats()
 
 #    testme(u"空白デリミター", u"くウハくデリミター")       
 #    dry_run()
