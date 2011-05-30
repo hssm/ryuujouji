@@ -36,6 +36,8 @@ segment_t = Table('segment', r_meta,
                    Column('id', Integer, primary_key=True),
                    Column('word_id', Integer, ForeignKey('word.id')),
                    Column('reading_id', Integer, ForeignKey('reading.id')),
+                   Column('tag', Integer),
+                   Column('tag_info', Unicode),
                    Column('index', Integer))
 
 
@@ -135,7 +137,7 @@ def db_populate_words():
             s = select([k_ele], k_ele.c['entry_ent_seq']==r.entry_ent_seq)
             ks = jd_engine.execute(s)
             for k in ks:
-                word_l.append({'keb':k.keb, 'reb':r.reb, 'found':False})
+                word_l.append({'keb':k.keb, 'reb':r.reb})
 
 
     r_engine.execute(word_t.insert(), word_l)

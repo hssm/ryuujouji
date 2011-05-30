@@ -63,9 +63,6 @@ def has_handakuten(kana):
 def get_handakuten(kana):
     return unichr(ord(kana)+2)
     
-def get_sokuon(kana):
-    return unichr(ord(kana)-1)
-
 def is_u(char):
     if char in [u'す',u'く', u'ぐ', u'む', u'ぶ', u'ぬ', u'る', u'う', u'つ']:
         return True
