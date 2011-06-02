@@ -65,6 +65,7 @@ def init():
         db_populate_words()
     else:
         r_engine = create_engine('sqlite:///' + READINGS_PATH)
+        
     
 
 def db_populate_kanji_readings():
@@ -124,31 +125,35 @@ def db_populate_words():
     word_l = []
     start = time.time()
  
-    s = select([r_ele])
-    rs = jd_engine.execute(s)
+ 
+    s = select([r_ele, re_restr.c['re_restr'], k_ele.c['keb']], from_obj=[
+            r_ele.outerjoin(re_restr, re_restr.c['r_ele_id'] == r_ele.c['id']).\
+            outerjoin(k_ele, k_ele.c['entry_ent_seq'] == r_ele.c['entry_ent_seq'])
+            ])
+               
+    results = jd_engine.execute(s)
     
-    for r in rs:
-        s = select([re_restr], re_restr.c['r_ele_id']==r.id)
-        restrs = jd_engine.execute(s).fetchall()
-        if len(restrs) > 0:
-            for restr in restrs:
-                word_l.append({'keb':restr.re_restr, 'reb':r.reb, 'found':False})
-        else: #reb applies to all kebs in its entry
-            s = select([k_ele], k_ele.c['entry_ent_seq']==r.entry_ent_seq)
-            ks = jd_engine.execute(s)
-            for k in ks:
-                word_l.append({'keb':k.keb, 'reb':r.reb})
-
+    for r in results:
+        #some words have no kanji elements
+        if r.keb is None:
+            continue
+        #if this entry has a restricted reb, only apply it to the
+        #corresponding keb
+        if r.re_restr is not None:
+            if r.re_restr == r.keb:
+                word_l.append({'keb':r.keb, 'reb':r.reb, 'found':False})
+        else: #otherwise, all rebs apply to all kebs in this entry
+            #but some readings don't use kanji, so no related kebs
+            if r.re_nokanji is not None:
+                word_l.append({'keb':r.keb, 'reb':r.reb, 'found':False})
 
     r_engine.execute(word_t.insert(), word_l)
     print 'Filling database with word/reading data took '\
             '%s seconds' % (time.time() - start)
 
-def get_meta():
+def get_connection():
         engine = create_engine('sqlite:///' + READINGS_PATH)
-        meta = MetaData()
-        meta.bind = engine
-        return meta
+        return engine.connect()
 
 
 if __name__ == "__main__":
