@@ -6,6 +6,7 @@ import cProfile
 import pstats
 import time
 import copy
+from sqlalchemy import MetaData
 from sqlalchemy.sql import select, and_, or_, bindparam
 
 import tools
@@ -61,15 +62,13 @@ class SegmentOku:
         self.reading = reading
         self.info = info
 
-meta = db.get_meta()
+conn = db.get_connection()
+meta = MetaData()
+meta.bind = conn.engine
 meta.reflect()
 reading_t = meta.tables['reading']
 word_t = meta.tables['word']
 segment_t = meta.tables['segment']
-r_engine = meta.bind
-
-select_char = select([reading_t],
-                     reading_t.c['character']==bindparam('character'))
 
 solutions = []
 def get_readings(word, reading):
@@ -107,9 +106,17 @@ def solve_kana(char, word, reading, index, segments):
             index += 1
             solve_reading(word[1:], reading[1:], index, tmp_segments)
 
+z = 0
 def solve_character(char, word, reading, index, segments):
-    char_readings = r_engine.execute(select_char, character=char).fetchall()
+    global z
+    
+    s = select([reading_t.c['id'], reading_t.c['reading']],
+               reading_t.c['character']==char)
 
+    x = time.time()
+    char_readings = conn.execute(s).fetchall()
+    z += time.time() - x
+    
     #TODO: Handle non-kanji and non-kana characters
     if char_readings == None:
         print "Shouldn't be here for now."
@@ -258,16 +265,29 @@ def solve_reading(word, reading, index=0, segments=None):
 found_l = []
 segment_l = []
 
+def save_found():
+    global found_l
+    global segment_l
+    
+    u = word_t.update().where(word_t.c['id']==
+                              bindparam('word_id')).\
+                              values(found=bindparam('found'))
+    conn.execute(u, found_l)
+    conn.execute(segment_t.insert(), segment_l)
+    found_l = []    
+    segment_l = []
+    
 def fill_solutions():
+    global z
+    global yy
     start = time.time()
-    r_engine.execute(segment_t.delete())
+    conn.execute(segment_t.delete())
     s = select([word_t])
-    words = r_engine.execute(s)
-    i = 0
+    words = conn.execute(s).fetchall()
+    goal = len(words)
+    save_now = 0
+    total = 0
     for word in words:
-#        i += 1
-#        if i == 20000:
-#            break
         segments = get_readings(word.keb, word.reb)
         for seg in segments:
             #print 'seg == ' , seg.unit
@@ -275,12 +295,20 @@ def fill_solutions():
             segment_l.append({'word_id':word.id,
                               'reading_id':seg.reading_id,
                               'index':seg.index})
-    print "Saving..."
-    u = word_t.update().where(word_t.c['id']==
-                              bindparam('word_id')).\
-                              values(found=bindparam('found'))
-    r_engine.execute(u, found_l)
-    r_engine.execute(segment_t.insert(), segment_l)
+        save_now += 1
+        if save_now > 5000:
+            save_now = 0
+            save_found()
+            total += 5000
+            print "Progress %s %% in %s seconds" % ((float(total) / goal)*100,
+                                                    (time.time() - start))
+            print 'z took ', z
+            z = 0
+
+
+    save_found()
+    
+
     print 'took %s seconds' % (time.time() - start)
 
 def dry_run():
@@ -289,9 +317,9 @@ def dry_run():
      """
      
     start = time.time()
-    r_engine.execute(segment_t.delete())
+    conn.execute(segment_t.delete())
     s = select([word_t])
-    words = r_engine.execute(s)
+    words = conn.execute(s)
     newly_solved = 0
     for word in words:
         segments = get_readings(word.keb, word.reb)
@@ -307,11 +335,11 @@ def dry_run():
 
 def print_stats():
     s = select([word_t])
-    words = r_engine.execute(s).fetchall()
+    words = conn.execute(s).fetchall()
     n = len(words)
     
     s = select([word_t], word_t.c['found'] == True)
-    found = r_engine.execute(s).fetchall()
+    found = conn.execute(s).fetchall()
     nf = len(found)
     
     percent = float(nf) / float(n) * 100
@@ -371,8 +399,8 @@ if __name__ == "__main__":
     testme(u"バージョン", u"バージョン")
     testme(u"シリアルＡＴＡ", u"シリアルエーティーエー")
 
-#    fill_solutions() 
-#    print_stats()
+    fill_solutions() 
+    print_stats()
 
 #    testme(u"空白デリミター", u"くウハくデリミター")       
 #    dry_run()
