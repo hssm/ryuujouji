@@ -11,41 +11,42 @@ HAS_DAKUTEN_LIST = list(u'かきくけこたちつてとさしすせそはひふ
 HAS_HANDAKUTEN_LIST = list(u'はひふへほハヒフヘホ') 
 
 
-def is_kata(kata):
-    for s in kata:
-        if s < u'\u30A0' or s > u'\u30FF':
-            return False
+def is_kata(s):
+    if s < u'\u30A0' or s > u'\u30FF':
+        return False
     return True
 
-def is_hira(hira):
-    for s in hira:
-        if s < u'\u3041' or s > u'\u309F':
-            return False
+def is_hira(s):
+    if s < u'\u3041' or s > u'\u309F':
+        return False
     return True
 
-def is_kana(kana):
-    for s in kana:
-        if s < u'\u3041' or s > u'\u30FF':
-            return False
+def is_kana(s):
+    if s < u'\u3041' or s > u'\u30FF':
+        return False
     return True
+
+def hira_from_kata(char):
+    if is_kata(char):
+        return unichr(ord(char)-96)
+    else:
+        return char
+
+def kata_from_hira(char):
+    if is_hira(char):
+        return unichr(ord(char)+96)
+    else:
+        return char
 
 def kata_to_hira(s): 
-    hira = ""
-    for char in unicode(s):
-        if is_kata(char):
-            hira += unichr(ord(char)-96)
-        else:
-            hira += char
-    return hira
+    slist = [hira_from_kata(char) for char in s]
+    s = "".join(slist)
+    return s
 
 def hira_to_kata(s):
-    kata = ""
-    for char in unicode(s):
-        if is_hira(char):
-            kata += unichr(ord(char)+96)
-        else:
-            kata += char
-    return kata
+    slist = [kata_from_hira(char) for char in s]
+    s = "".join(slist)
+    return s
 
 def has_dakuten(kana):
     if kana in HAS_DAKUTEN_LIST:
@@ -91,18 +92,9 @@ def u_to_i(char):
         return u'ち'
     
 if __name__ == '__main__':
-    #True
-    print is_kana(u'バスてい')
-    print is_hira(u'こんにちは')
-    print is_kata(u'コンピューター')
-    print is_hira(kata_to_hira(u'あえいうおアエイウオ'))
 
-    #False
-    print is_kana(u'abc')
-    print is_kana(u'新しい')    
-    print is_hira(u'バスてい')
-    print is_kata(u'きょう')
-    print is_kata(u'きょうはスゴイ')
+    print kata_to_hira(u'あえいうおアエイウオ')
+
     
     print get_dakuten(u'か')
     print get_dakuten(u'ほ')

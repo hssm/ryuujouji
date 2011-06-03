@@ -4,12 +4,15 @@
 
 import cProfile
 import pstats
+import line_profiler
 import time
 import copy
 from sqlalchemy import MetaData
 from sqlalchemy.sql import select, and_, or_, bindparam
 
-import tools
+from tools import is_u, u_to_i, is_kana, is_kata, kata_to_hira, has_dakuten,\
+                  get_dakuten, has_handakuten, get_handakuten, is_hira,\
+                  hira_to_kata
 import db
 
 class SegmentTag:
@@ -34,33 +37,48 @@ class Segment:
     reading_id = None
     #the reading of this segment as it appears in the word
     reading = None
-    #A description of the transformation (showing specific character changes)
-    info = None
     #A SegmentOku object with information on the reading's Okurigana
     oku_segment = None
     
     def __init__(self, tag, character, index, dic_reading, reading_id,
-                 reading, info):
+                 reading):
         self.tag = tag
         self.character = character
         self.index = index
         self.dic_reading = dic_reading
         self.reading_id = reading_id
         self.reading = reading
-        self.info = info
 
 class SegmentOku:
     #A SegmentOkuTag denoting the type of transformation of the reading.
     tag = None
     #the reading of this segment as it appears in the word
     reading = None    
-    #A description of the transformation (showing specific character changes)
-    info = None
     
-    def __init__(self, tag, reading, info):
+    def __init__(self, tag, reading):
         self.tag = tag
         self.reading = reading
-        self.info = info
+
+class Tree:
+    parent = None
+    segment = None
+    next_word = None
+    next_reading = None
+    
+    def __init__(self, parent, segment, next_word=0, next_reading=0):
+        self.parent = parent
+        self.segment = segment
+        self.next_word = next_word
+        self.next_reading = next_reading
+      
+    def get_branch_as_list(self):       
+        segments = [self.segment]
+        p = self.parent
+        while p.segment is not None:
+            segments.append(p.segment)
+            p = p.parent
+        segments.reverse()
+        return segments
 
 conn = db.get_connection()
 
@@ -73,6 +91,7 @@ segment_t = meta.tables['segment']
 
 solutions = []
 segments = []
+
 def get_readings(word, reading):
     """Returns a list of dictionaries separating the word into portions of
     character-reading pairs that form the word."""
@@ -94,238 +113,178 @@ def get_readings(word, reading):
     else:
         return []
 
-
-class Tree:
-    parent = None
-    segment = None
-    next_word = None
-    next_reading = None
+def solve_kana(w_char, w_index, reading, branches, branches_at):
+    n_new = 0
+    for branch in branches:
+        r_index = branch.next_reading
+        if r_index >= len(reading):
+            continue
+        r_char = reading[r_index]
+        if is_kata(w_char) and is_hira(r_char):
+            r_char = hira_to_kata(r_char)
     
-    def __init__(self, parent, segment, next_word=0, next_reading=0):
-        self.parent = parent
-        self.segment = segment
-        self.next_word = next_word
-        self.next_reading = next_reading
-        
-    def get_branch_as_list(self):
-        segments = [self.segment]
-        p = self.parent
-        while p is not None:
-            segments.append(p.segment)
-            p = p.parent
-        
-        segments.reverse()
-        return segments
+        if w_char == r_char:
+            s = Segment(SegmentTag.Kana, w_char, w_index, w_char, 0, r_char)
+            branch = Tree(branch, s, w_index+1, r_index+1)
+            branches_at[w_index+1].append(branch)
+            n_new += 1
+    return n_new
 
-def solve_reading(word, reading, index=0):
+def solve_character(g_word, w_index, g_reading, branches, branches_at):
+    new_branches = 0
+    w_char = g_word[w_index]
 
-    leaves = []
-    next_leaves = []
-
-    for i, char in enumerate(word):
-        char = word[i]
-
-        leaves = next_leaves
-        next_leaves = []    
-        
-        if i == 0:
-            if tools.is_kana(char):
-                solve_kana(word, reading, None, next_leaves)                  
-            else:
-                solve_character(word, reading, None, next_leaves)
-        else:    
-            for l in leaves:
-                if i == l.next_word:                        
-                    if tools.is_kana(char):
-                        solve_kana(word, reading, l, next_leaves)                  
-                    else:
-                        solve_character(word, reading, l, next_leaves)
-                else:
-                    next_leaves.append(l)
-                        
-                    
-    for l in next_leaves:
-        if l.next_word == len(word) and l.next_reading == len(reading):
-            solutions.append(l.get_branch_as_list())           
-
-    return solutions
-
-def solve_kana(word, reading, leaf, next_leaves):
-    if leaf is None:
-        word_index = 0
-        reading_index = 0
-    else:
-        word_index = leaf.next_word
-        reading_index= leaf.next_reading
-
-    if reading_index >= len(reading):
-        return
-    
-    w_char = word[word_index]
-    r_char = reading[reading_index]
- 
-    if tools.is_kata(w_char) and tools.is_hira(r_char):
-        r_char = tools.hira_to_kata(r_char)
-
-    if w_char == r_char:
-        s = Segment(SegmentTag.Kana, w_char, word_index, w_char, 0,
-                    reading[reading_index], 'Kana')
-        branch = Tree(leaf, s, word_index+1, reading_index+1)
-        next_leaves.append(branch)
-
-z = 0
-yy = 0
-def solve_character(word, reading, leaf, next_leaves):
-    global z
-    global yy
-    xx = time.time()
-    if leaf is None:
-        word_index = 0
-        reading_index = 0
-    else:
-        word_index = leaf.next_word
-        reading_index= leaf.next_reading
-    
-    if reading_index >= len(reading):
-        return
-    
-    w_char = word[word_index]
-    
-    word = word[word_index:]
-    reading = reading[reading_index:]
-    
-    
     s = select([reading_t.c['id'], reading_t.c['reading']],
                reading_t.c['character']==w_char)
-    
-    x = time.time()
     char_readings = conn.execute(s).fetchall()
-    z += time.time() - x
     
     #TODO: Handle non-kanji and non-kana characters
     if char_readings == None:
         print "Shouldn't be here for now."
         return None
-
+    
     for cr in char_readings:
-        #print w_char, '=', cr.reading
-        variants = []
-        oku_variants = []
-       
         (r, s, o) = cr.reading.partition(".")
         rl = len(r)  #reading length (non-okurigana portion)
         ol = len(o)  #okurigana length
+            
+        variants = []
+        oku_variants = []
+    
+        word = g_word[w_index:]
 
-        s = Segment(SegmentTag.Regular, w_char, word_index, cr.reading, cr.id,
-                    reading[:rl+ol],
-                    'Regular character reading: '+cr.reading[:rl])
-        variants.append([cr.reading, s])
-        
+        variants.append((cr.reading, SegmentTag.Regular))
+
         first_k = r[0]
         last_k = r[-1]
-        
-        if tools.has_dakuten(first_k):
-            d = tools.get_dakuten(first_k)
+
+        if has_dakuten(first_k):
+            d = get_dakuten(first_k)
             daku_r = d + cr.reading[1:]
-            info = 'Dakuten (゛) added to first syllable in reading. '\
-                    '%s became %s.' % (cr.reading[:rl], daku_r)
-            s = Segment(SegmentTag.Dakuten, w_char, word_index, cr.reading,
-                        cr.id, reading[:rl+ol], info)
-            variants.append([daku_r, s])
+            variants.append((daku_r, SegmentTag.Dakuten))
                                
-        if tools.has_handakuten(first_k):
-            d = tools.get_handakuten(first_k)
+        if has_handakuten(first_k):
+            d = get_handakuten(first_k)
             handaku_r = d + cr.reading[1:]
-            info = 'Handakuten (゜) added to first syllable in reading. '\
-                    '%s became %s.' % (cr.reading[:rl], handaku_r)
-            s = Segment(SegmentTag.Handakuten, w_char, word_index, cr.reading,
-                        cr.id, reading[:rl+ol], info)
-            variants.append([handaku_r, s])
+            variants.append((handaku_r, SegmentTag.Handakuten))
         
         if last_k == u'つ' or last_k == u'ツ':
             if len(r) > 1: #there may be a case like つ.む == つ
-                soku_r = r[:-1] + tools.get_sokuon(r[-1])
-                info = 'The last character, つ, became a っ (sokuon). '\
-                        '%s became %s.' % (cr.reading[:rl], soku_r)
-                s = Segment(SegmentTag.Sokuon, w_char, word_index, cr.reading,
-                            cr.id, reading[:rl+ol], info)
-                variants.append([soku_r, s])
+                soku_r = r[:-1] + unichr(ord(r[-1])-1)
+                variants.append((soku_r, SegmentTag.Sokuon))
 
-        if o is not u'':           
+        if o is not u'':
+            oku_variants.append((o, SegmentOkuTag.Regular))
+            
             oku_last_k = o[len(o)-1]
             if oku_last_k == u'つ':  # or last_k == u'ツ':                       
                 soku_o = o[:-1] + u'っ'
-                oku_info = 'つ became っ (sokuon).'\
-                           'Okurigana %s became %s.' % (o, soku_o)
-                s = SegmentOku(SegmentOkuTag.Sokuon, soku_o, oku_info)                     
-                oku_variants.append([soku_o, s])
+                oku_variants.append((soku_o, SegmentOkuTag.Sokuon))
                 
-            if tools.is_u(oku_last_k):
-                i_o = o[:-1] + tools.u_to_i(oku_last_k)
-                oku_info = ('Inflected u-verb. Okurigana %s became %s.' %
-                            (o, i_o))
-                s = SegmentOku(SegmentOkuTag.Inflected, i_o, oku_info)
-                oku_variants.append([i_o, s])    
-        
-        #The portion of the known word we want to test for this character        
-        known_r = reading[:rl]
-        
-        #The portion of the known word we want to test as okurigana
-        known_oku = word[1:ol+1]
-        
-        for var in variants:
-            v = var[0]
-            seg = var[1]
-            (r, s, o) = v.partition(".")
-            #If they're not both katakana, convert the non-katakatana
-            #to hiragana so we can compare them.
-            if not (tools.is_kata(r[0]) and tools.is_kata(known_r[0])):
-                known_r = tools.kata_to_hira(known_r)
-                r = tools.kata_to_hira(r) 
+            if is_u(oku_last_k):
+                i_o = o[:-1] + u_to_i(oku_last_k)
+                oku_variants.append((i_o, SegmentOkuTag.Inflected))    
+
+        for branch in branches:
+            r_index = branch.next_reading
+            if r_index >= len(g_reading):
+                continue
+            
+            reading = g_reading[r_index:]
+            
+            #The portion of the known word we want to test for this character        
+            known_r = reading[:rl]
+            #The portion of the known word we want to test as okurigana
+            known_oku = word[1:ol+1]
+
+            for var in variants:
+                v = var[0]
+                tag = var[1]
+                (r, s, o) = v.partition(".")
                 
-            #Okurigana branch (if it has any)
-            if o is not u'':
-                #TODO: move regular okurigana part to variant appending at the top
-                #Try standard okurigana   
-                if r == known_r and o == known_oku:
-                    os = SegmentOku(SegmentOkuTag.Regular, o,
-                                    'Regular Okurigana: %s' % o )
-                    seg.oku_segment = os
-                    branch = Tree(leaf, seg, word_index+1+ol, reading_index+rl+ol)
-                    next_leaves.append(branch)
+                #If they're not both katakana, convert the non-katakana
+                #to hiragana so we can compare them.
+                if not (is_kata(r[0]) and is_kata(known_r[0])):
+                    known_r = kata_to_hira(known_r)
+                    r = kata_to_hira(r) 
                     
-                #Try all okurigana variants
-                for oku_var in oku_variants:
-                    ov = oku_var[0]
-                    oseg = oku_var[1]
-                    if r == known_r and known_oku == ov:
-                        #Attach okurigana segment to base segment
-                        seg.oku_segment = oseg
-                        branch = Tree(leaf, seg, word_index+1+ol, reading_index+rl+ol)
-                        next_leaves.append(branch)
+                #Okurigana branch (if it has any)
+                if o is not u'':                       
+                    #Try all okurigana variants
+                    for oku_var in oku_variants:                       
+                        ov = oku_var[0]
+                        otag = oku_var[1]
+                        if r == known_r and known_oku == ov:
+                            #Attach okurigana segment to base segment
+                            seg = Segment(tag, w_char, w_index, cr.reading, cr.id,
+                                          reading[:rl+ol])
+                            oseg = SegmentOku(otag, ov)
+                            seg.oku_segment = oseg
+                            n_branch = Tree(branch, seg, w_index+1+ol, r_index+rl+ol)
+                            branches_at[w_index+1+ol].append(n_branch)
+                            new_branches += 1
+    
+                #No Okurigana branch
+                else:
+                    #Branch for standard reading with no transformations.
+                    if known_r.startswith(r):
+                        #This branch for regular words and readings.
+                        seg = Segment(tag, w_char, w_index, cr.reading, cr.id,
+                        reading[:rl+ol])
+            
+                        n_branch = Tree(branch, seg, w_index+1, r_index+rl)
+                        branches_at[w_index+1].append(n_branch)
+                        new_branches += 1
+                        
+                        #"Trailing kana" branch, for words like 守り人 = もりびと
+                        #The り is part of the reading for 守 but isn't okurigana.
+                        if len(word) > 1:
+                            part_kana = word[1]
+                            if (is_kana(part_kana) and
+                                part_kana == reading[rl-1]):
+                                seg = Segment(SegmentTag.Kana_trail, w_char,
+                                              w_index, cr.reading, cr.id,
+                                reading[:rl+ol])
 
-            #No Okurigana branch
-            else:
-                #Branch for standard reading with no transformations.
-                if known_r.startswith(r):
-                    #This branch for regular words and readings.
-                    branch = Tree(leaf, seg, word_index+1, reading_index+rl)
-                    next_leaves.append(branch)
+                                n_branch = Tree(branch, seg, w_index+2, r_index+rl)
+                                branches_at[w_index+2].append(n_branch)
+                                new_branches += 1
+        
+    return new_branches    
+            
 
-                    #"Trailing kana" branch, for words like 守り人 = もりびと
-                    #The り is part of the reading for 守 but isn't okurigana.
-                    if len(word) > 1:
-                        part_kana = word[1]
-                        if (tools.is_kana(part_kana) and
-                            part_kana == reading[rl-1]):
-                            #Change the segment's tag and info before saving it
-                            seg.tag = SegmentTag.Kana_trail
-                            seg.info = ("Trailing kana %s is part of the "
-                            "reading and isn't Okurigana." % part_kana)
-                            branch = Tree(leaf, seg, word_index+2, reading_index+rl)
-                            next_leaves.append(branch)
-                            
-    yy += time.time() - xx                     
+def solve_reading(word, reading):
+    root = Tree(None, None)
+     
+    w_length = len(word)
+    #list to store lists of branches that are continued at that character index
+    #extra slot at the end will store solutions
+    branches_at =  [[] for w in range(w_length+1)]
+    branches_at[0].append(root)
+    usable_branches = 1
+    for w_index, w_char in enumerate(word):
+        #No solvable branches left. Terminate early
+        if usable_branches == 0:
+            break
+        branches_here = branches_at[w_index]
+        
+        #if no branches are expected to start here, move on
+        if len(branches_here) == 0:
+            continue
+
+        usable_branches -= len(branches_here)
+
+        if is_kana(w_char):
+            usable_branches += solve_kana(w_char, w_index, reading,
+                                         branches_here, branches_at)
+        else:        
+            usable_branches += solve_character(word, w_index, reading,
+                                              branches_here, branches_at)
+    for l in branches_at[-1]:
+        if l.next_word == len(word) and l.next_reading == len(reading):
+            solutions.append(l.get_branch_as_list())
+    return solutions
+
 
 found_l = []
 segment_l = []
@@ -343,8 +302,6 @@ def save_found():
     segment_l = []
     
 def fill_solutions():
-    global z
-    global yy
     start = time.time()
     conn.execute(segment_t.delete())
     s = select([word_t])
@@ -352,6 +309,7 @@ def fill_solutions():
     goal = len(words)
     save_now = 0
     total = 0
+    i = 0
     for word in words:
         segments = get_readings(word.keb, word.reb)
         for seg in segments:
@@ -360,20 +318,17 @@ def fill_solutions():
             segment_l.append({'word_id':word.id,
                               'reading_id':seg.reading_id,
                               'index':seg.index})
+#        i += 1
+#        if i > 10000:
+#            return
         save_now += 1
-        if save_now > 5000:
+        if save_now > 20000:
             save_now = 0
             save_found()
-            total += 5000
+            total += 20000
             print "Progress %s %% in %s seconds" % ((float(total) / goal)*100,
                                                     (time.time() - start))
-            print 'z took ', z
-            print 'yy took ', yy
-            z = 0
-            yy = 0
-
     save_found()
-    
 
     print 'took %s seconds' % (time.time() - start)
 
@@ -395,7 +350,7 @@ def dry_run():
         else:
             if len(segments) > 0:
                 newly_solved += 1
-                #print "New found word %s" % word.keb, word.reb
+                print "New found word %s" % word.keb, word.reb
     print "The changes will solve another %s entries. " % newly_solved
 
 
@@ -424,10 +379,8 @@ def testme(k, r):
         print 'tag[%s]' % s.tag,
         print 'dic_reading[%s]' % s.dic_reading,
         print 'reading_id[%s]' % s.reading_id,
-        print 'info[%s]' % s.info,
         if s.oku_segment is not None:
-            print 'oku_reading[%s]' % s.oku_segment.reading,
-            print 'oku_info[%s]' % s.oku_segment.info
+            print 'oku_reading[%s]' % s.oku_segment.reading
         else:
             print
                         
@@ -462,11 +415,10 @@ if __name__ == "__main__":
 #    testme(u"糶り", u"せり")       
 #    testme(u"バージョン", u"バージョン")
 #    testme(u"シリアルＡＴＡ", u"シリアルエーティーエー")
-#    testme(u"猶太", u"ユダヤ")
-    
+#    testme(u"自動金銭出入機", u"じどうきんせんしゅつにゅうき")    
 
     fill_solutions() 
-    print_stats()
+#    print_stats()
 
 #    testme(u"空白デリミター", u"くウハくデリミター")       
 #    dry_run()
@@ -488,7 +440,7 @@ if __name__ == "__main__":
 
 #    cProfile.run('fill_solutions()', 'pstats')
 #    p = pstats.Stats('pstats')
-#    p.sort_stats('time', 'cum').print_stats(.5)
+#    p.sort_stats('time', 'cum').print_stats()
 
 #last attempt
 #There are 159203 entries in JMdict. A solution has been found for 131418 of them. (82%)

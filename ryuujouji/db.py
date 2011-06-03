@@ -21,7 +21,7 @@ r_engine = None
 
 reading_t = Table('reading', r_meta,
                   Column('id', Integer, primary_key=True),
-                  Column('character', Unicode, index=True),
+                  Column('character', Unicode(1), index=True),
                   Column('reading', Unicode, index=True),
                   Column('type', String),
                   Column('affix', String))
@@ -117,14 +117,13 @@ def db_populate_words():
     jd_meta.bind = jd_engine
     jd_meta.reflect()
 
-    entry = jd_meta.tables['entry']
+
     k_ele = jd_meta.tables['k_ele']
     r_ele = jd_meta.tables['r_ele']
     re_restr = jd_meta.tables['re_restr']
 
     word_l = []
     start = time.time()
- 
  
     s = select([r_ele, re_restr.c['re_restr'], k_ele.c['keb']], from_obj=[
             r_ele.outerjoin(re_restr, re_restr.c['r_ele_id'] == r_ele.c['id']).\
