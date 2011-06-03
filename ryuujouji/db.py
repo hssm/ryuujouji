@@ -23,8 +23,7 @@ reading_t = Table('reading', r_meta,
                   Column('id', Integer, primary_key=True),
                   Column('character', Unicode(1), index=True),
                   Column('reading', Unicode, index=True),
-                  Column('type', String),
-                  Column('affix', String))
+                  Column('type', String))
 
 word_t = Table('word', r_meta,
                Column('id', Integer, primary_key=True),
@@ -85,26 +84,22 @@ def db_populate_kanji_readings():
     for r in readings:
         affix = "none"
         reading = r.reading
-        if r.reading[-1] == "-":
-            affix = "prefix"
+        if r.reading[-1] == u"-":
             reading = reading[:-1]
-        elif r.reading[0] == "-":
-            affix = "suffix"
+        elif r.reading[0] == u"-":
             reading = reading[1:]
 
         reading_l.append({'character':r.character_literal,
                           'reading':reading,
-                          'type':r.r_type,
-                          'affix':affix})
+                          'type':r.r_type})
 
     f = codecs.open(OTHER_READINGS_PATH, encoding='utf-8')
     for line in f:
         line = line.strip('\n')
         (k, s, r) = line.partition(",")
-        reading_l.append({'character':k, 'reading':r, 'type':'other',
-                          'affix':'none'})
+        reading_l.append({'character':k, 'reading':r, 'type':'other'})
         
-    r_engine.execute(reading_t.insert(), reading_l)
+    r_engine.execute(reading_t.insert().prefix_with("OR REPLACE"), reading_l)
 
     print 'Filling database with kanji/reading data took '\
             '%s seconds' % (time.time() - start)

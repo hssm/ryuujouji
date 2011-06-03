@@ -2,9 +2,6 @@
 #Copyright (C) 2011 Houssam Salem <ntsp.gm@gmail.com>
 #License: GPLv3; http://www.gnu.org/licenses/gpl.txt
 
-import cProfile
-import pstats
-import line_profiler
 import time
 import copy
 from sqlalchemy import MetaData
@@ -113,145 +110,6 @@ def get_readings(word, reading):
     else:
         return []
 
-def solve_kana(w_char, w_index, reading, branches, branches_at):
-    n_new = 0
-    for branch in branches:
-        r_index = branch.next_reading
-        if r_index >= len(reading):
-            continue
-        r_char = reading[r_index]
-        if is_kata(w_char) and is_hira(r_char):
-            r_char = hira_to_kata(r_char)
-    
-        if w_char == r_char:
-            s = Segment(SegmentTag.Kana, w_char, w_index, w_char, 0, r_char)
-            branch = Tree(branch, s, w_index+1, r_index+1)
-            branches_at[w_index+1].append(branch)
-            n_new += 1
-    return n_new
-
-def solve_character(g_word, w_index, g_reading, branches, branches_at):
-    new_branches = 0
-    w_char = g_word[w_index]
-
-    s = select([reading_t.c['id'], reading_t.c['reading']],
-               reading_t.c['character']==w_char)
-    char_readings = conn.execute(s).fetchall()
-    
-    #TODO: Handle non-kanji and non-kana characters
-    if char_readings == None:
-        print "Shouldn't be here for now."
-        return None
-    
-    for cr in char_readings:
-        (r, s, o) = cr.reading.partition(".")
-        rl = len(r)  #reading length (non-okurigana portion)
-        ol = len(o)  #okurigana length
-            
-        variants = []
-        oku_variants = []
-    
-        word = g_word[w_index:]
-
-        variants.append((cr.reading, SegmentTag.Regular))
-
-        first_k = r[0]
-        last_k = r[-1]
-
-        if has_dakuten(first_k):
-            d = get_dakuten(first_k)
-            daku_r = d + cr.reading[1:]
-            variants.append((daku_r, SegmentTag.Dakuten))
-                               
-        if has_handakuten(first_k):
-            d = get_handakuten(first_k)
-            handaku_r = d + cr.reading[1:]
-            variants.append((handaku_r, SegmentTag.Handakuten))
-        
-        if last_k == u'つ' or last_k == u'ツ':
-            if len(r) > 1: #there may be a case like つ.む == つ
-                soku_r = r[:-1] + unichr(ord(r[-1])-1)
-                variants.append((soku_r, SegmentTag.Sokuon))
-
-        if o is not u'':
-            oku_variants.append((o, SegmentOkuTag.Regular))
-            
-            oku_last_k = o[len(o)-1]
-            if oku_last_k == u'つ':  # or last_k == u'ツ':                       
-                soku_o = o[:-1] + u'っ'
-                oku_variants.append((soku_o, SegmentOkuTag.Sokuon))
-                
-            if is_u(oku_last_k):
-                i_o = o[:-1] + u_to_i(oku_last_k)
-                oku_variants.append((i_o, SegmentOkuTag.Inflected))    
-
-        for branch in branches:
-            r_index = branch.next_reading
-            if r_index >= len(g_reading):
-                continue
-            
-            reading = g_reading[r_index:]
-            
-            #The portion of the known word we want to test for this character        
-            known_r = reading[:rl]
-            #The portion of the known word we want to test as okurigana
-            known_oku = word[1:ol+1]
-
-            for var in variants:
-                v = var[0]
-                tag = var[1]
-                (r, s, o) = v.partition(".")
-                
-                #If they're not both katakana, convert the non-katakana
-                #to hiragana so we can compare them.
-                if not (is_kata(r[0]) and is_kata(known_r[0])):
-                    known_r = kata_to_hira(known_r)
-                    r = kata_to_hira(r) 
-                    
-                #Okurigana branch (if it has any)
-                if o is not u'':                       
-                    #Try all okurigana variants
-                    for oku_var in oku_variants:                       
-                        ov = oku_var[0]
-                        otag = oku_var[1]
-                        if r == known_r and known_oku == ov:
-                            #Attach okurigana segment to base segment
-                            seg = Segment(tag, w_char, w_index, cr.reading, cr.id,
-                                          reading[:rl+ol])
-                            oseg = SegmentOku(otag, ov)
-                            seg.oku_segment = oseg
-                            n_branch = Tree(branch, seg, w_index+1+ol, r_index+rl+ol)
-                            branches_at[w_index+1+ol].append(n_branch)
-                            new_branches += 1
-    
-                #No Okurigana branch
-                else:
-                    #Branch for standard reading with no transformations.
-                    if known_r.startswith(r):
-                        #This branch for regular words and readings.
-                        seg = Segment(tag, w_char, w_index, cr.reading, cr.id,
-                        reading[:rl+ol])
-            
-                        n_branch = Tree(branch, seg, w_index+1, r_index+rl)
-                        branches_at[w_index+1].append(n_branch)
-                        new_branches += 1
-                        
-                        #"Trailing kana" branch, for words like 守り人 = もりびと
-                        #The り is part of the reading for 守 but isn't okurigana.
-                        if len(word) > 1:
-                            part_kana = word[1]
-                            if (is_kana(part_kana) and
-                                part_kana == reading[rl-1]):
-                                seg = Segment(SegmentTag.Kana_trail, w_char,
-                                              w_index, cr.reading, cr.id,
-                                reading[:rl+ol])
-
-                                n_branch = Tree(branch, seg, w_index+2, r_index+rl)
-                                branches_at[w_index+2].append(n_branch)
-                                new_branches += 1
-        
-    return new_branches    
-            
 
 def solve_reading(word, reading):
     root = Tree(None, None)
@@ -286,6 +144,153 @@ def solve_reading(word, reading):
     return solutions
 
 
+def solve_kana(w_char, w_index, reading, branches, branches_at):
+    n_new = 0
+    for branch in branches:
+        r_index = branch.next_reading
+        if r_index >= len(reading):
+            continue
+        r_char = reading[r_index]
+        if is_kata(w_char) and is_hira(r_char):
+            r_char = hira_to_kata(r_char)
+    
+        if w_char == r_char:
+            s = Segment(SegmentTag.Kana, w_char, w_index, w_char, 0, r_char)
+            branch = Tree(branch, s, w_index+1, r_index+1)
+            branches_at[w_index+1].append(branch)
+            n_new += 1
+    return n_new
+
+
+def solve_character(g_word, w_index, g_reading, branches, branches_at):
+    new_branches = 0
+    w_char = g_word[w_index]
+
+    s = select([reading_t.c['id'], reading_t.c['reading']],
+               reading_t.c['character']==w_char)
+    char_readings = conn.execute(s).fetchall()
+    
+    #TODO: Handle non-kanji and non-kana characters
+    if char_readings == None:
+        print "Shouldn't be here for now."
+        return None
+    
+    for cr in char_readings:
+        (r, s, o) = cr.reading.partition(".")
+        rl = len(r)  #reading length (non-okurigana portion)
+        ol = len(o)  #okurigana length
+            
+        variants = []
+        oku_variants = []
+    
+        word = g_word[w_index:]
+
+        variants.append((cr.reading[:rl], SegmentTag.Regular))
+
+        first_k = r[0]
+        last_k = r[-1]
+
+        if has_dakuten(first_k):
+            d = get_dakuten(first_k)
+            daku_r = d + cr.reading[1:rl]
+            variants.append((daku_r, SegmentTag.Dakuten))
+                               
+        if has_handakuten(first_k):
+            d = get_handakuten(first_k)
+            handaku_r = d + cr.reading[1:rl]
+            variants.append((handaku_r, SegmentTag.Handakuten))
+        
+        if last_k == u'つ' or last_k == u'ツ':
+            if len(r) > 1: #there may be a case like つ.む == つ
+                soku_r = r[:-1] + unichr(ord(r[-1])-1)
+                variants.append((soku_r, SegmentTag.Sokuon))
+
+        if o is not u'':
+            #we're assuming okurigana is always hiragana
+            #if it's ever changed, make sure the reading is grabbed from
+            #reading, not o, to keep the original characters
+            oku_variants.append((o, SegmentOkuTag.Regular))
+            
+            oku_last_k = o[len(o)-1]
+            if oku_last_k == u'つ':                        
+                soku_o = o[:-1] + u'っ'
+                oku_variants.append((soku_o, SegmentOkuTag.Sokuon))
+                
+            if is_u(oku_last_k):
+                i_o = o[:-1] + u_to_i(oku_last_k)
+                oku_variants.append((i_o, SegmentOkuTag.Inflected))    
+
+        #The portion of the known word we want to test as okurigana
+        known_oku = word[1:ol+1]
+
+        for branch in branches:
+            r_index = branch.next_reading
+            if r_index >= len(g_reading):
+                continue
+            
+            reading = g_reading[r_index:]
+            
+            #The portion of the known word we want to test for this character        
+            known_r = reading[:rl]
+            kr_is_kata = is_kata(known_r[0])
+
+            for var in variants:
+                (r, tag) = var
+                                
+                #If they're not both katakana, convert the non-katakana
+                #to hiragana so we can compare them.
+                if kr_is_kata and not is_kata(r[0]):
+                    known_r = kata_to_hira(known_r)
+                elif not kr_is_kata and is_kata(r[0]):
+                    r = kata_to_hira(r)
+                     
+                    
+                #Okurigana branch (if it has any)
+                if o is not u'':                       
+                    #Try all okurigana variants
+                    for oku_var in oku_variants:                       
+                        (ov, otag) = oku_var
+                        if r == known_r and known_oku == ov:
+                            #Attach okurigana segment to base segment
+                            seg = Segment(tag, w_char, w_index, cr.reading,
+                                          cr.id, reading[:rl+ol])
+                            oseg = SegmentOku(otag, ov)
+                            seg.oku_segment = oseg
+                            n_branch = Tree(branch, seg, w_index+1+ol,
+                                            r_index+rl+ol)
+                            branches_at[w_index+1+ol].append(n_branch)
+                            new_branches += 1
+    
+                #No Okurigana branch
+                else:
+                    #Branch for standard reading with no transformations.
+                    if known_r.startswith(r):
+                        #This branch for regular words and readings.
+                        seg = Segment(tag, w_char, w_index, cr.reading, cr.id,
+                        reading[:rl+ol])
+            
+                        n_branch = Tree(branch, seg, w_index+1, r_index+rl)
+                        branches_at[w_index+1].append(n_branch)
+                        new_branches += 1
+                        
+                        #"Trailing kana" branch, for words like 守り人 = もりびと
+                        #The り is part of the reading for 守 but isn't okurigana.
+                        if len(word) > 1:
+                            part_kana = word[1]
+                            if (is_kana(part_kana) and
+                                part_kana == reading[rl-1]):
+                                seg = Segment(SegmentTag.Kana_trail, w_char,
+                                              w_index, cr.reading, cr.id,
+                                reading[:rl+ol])
+
+                                n_branch = Tree(branch, seg, w_index+2,
+                                                r_index+rl)
+                                branches_at[w_index+2].append(n_branch)
+                                new_branches += 1
+        
+    return new_branches    
+            
+
 found_l = []
 segment_l = []
 
@@ -300,7 +305,8 @@ def save_found():
     conn.execute(segment_t.insert(), segment_l)
     found_l = []    
     segment_l = []
-    
+
+
 def fill_solutions():
     start = time.time()
     conn.execute(segment_t.delete())
@@ -418,30 +424,15 @@ if __name__ == "__main__":
 #    testme(u"自動金銭出入機", u"じどうきんせんしゅつにゅうき")    
 
     fill_solutions() 
-#    print_stats()
-
-#    testme(u"空白デリミター", u"くウハくデリミター")       
+    print_stats()     
 #    dry_run()
 
 #    testme(u"日本刀", u"にほんとう")
-    
-    
 #    testme(u"全国津々浦々", u"ぜんこくつつうらうら")
-#    testme(u"酒機嫌", u"ささきげん")
-
-
-
-
-    #testme(u"四日市ぜんそく", u"よっかいちぜんそく")
+#   testme(u"酒機嫌", u"ささきげん")
+#    testme(u"四日市ぜんそく", u"よっかいちぜんそく")
 #    testme(u"お腹", u"おなか")
 #    testme(u"今日", u"きょう")
-#    testme(u"疾く疾く", u"とくとく") #potential missing kanji reading?
 #    testme(u"当り", u"あたり")
 
-#    cProfile.run('fill_solutions()', 'pstats')
-#    p = pstats.Stats('pstats')
-#    p.sort_stats('time', 'cum').print_stats()
-
-#last attempt
 #There are 159203 entries in JMdict. A solution has been found for 131418 of them. (82%)
-#There are 157902 entries in JMdict. A solution has been found for 130442 of them. (82%)
