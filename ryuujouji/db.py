@@ -10,7 +10,7 @@ from sqlalchemy import create_engine, Table, Column, Unicode, \
 from sqlalchemy.sql import select, and_, or_
 
 filedir = os.path.dirname(__file__)
-dbdir = os.path.join(os.path.dirname(filedir), 'dbs')
+dbdir = os.path.join(filedir, 'dbs')
 
 READINGS_PATH = os.path.join(dbdir, 'readings.sqlite')
 JMDICT_PATH = os.path.join(dbdir, 'jmdict.sqlite')
