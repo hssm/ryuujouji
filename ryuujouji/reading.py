@@ -12,6 +12,19 @@ from tools import is_u, u_to_i, is_kana, is_kata, kata_to_hira, has_dakuten,\
                   hira_to_kata
 import db
 
+conn = db.get_connection()
+
+meta = MetaData()
+meta.bind = conn.engine
+meta.reflect()
+reading_t = meta.tables['reading']
+word_t = meta.tables['word']
+segment_t = meta.tables['segment']
+
+r_select = select([reading_t.c.id, reading_t.c.reading]).\
+                  where(reading_t.c.character==bindparam('character'))
+
+
 class SegmentTag:
     """Enums for types of transformations of readings."""
     Kana, Regular, Dakuten, Handakuten, Sokuon, Kana_trail = range(6)
@@ -75,15 +88,6 @@ class Tree:
         segments.reverse()
         return segments
 
-conn = db.get_connection()
-
-meta = MetaData()
-meta.bind = conn.engine
-meta.reflect()
-reading_t = meta.tables['reading']
-word_t = meta.tables['word']
-segment_t = meta.tables['segment']
-
 solutions = []
 segments = []
 
@@ -93,6 +97,9 @@ def get_readings(word, reading):
     
     global solutions
     solutions = []
+    
+    if isinstance(word, list):
+        print 'yes'
     
     #FIXME: This solution is ugly and produces unexpected behaviour
     #(modifying input word). This should be done properly below.
@@ -165,9 +172,7 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
     new_branches = 0
     w_char = g_word[w_index]
 
-    s = select([reading_t.c['id'], reading_t.c['reading']],
-               reading_t.c['character']==w_char)
-    char_readings = conn.execute(s).fetchall()
+    char_readings = conn.execute(r_select, character=w_char).fetchall() 
     
     #TODO: Handle non-kanji and non-kana characters
     if char_readings == None:
@@ -284,8 +289,8 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                                 branches_at[w_index+2].append(n_branch)
                                 new_branches += 1
     return new_branches    
-            
 
+            
 found_l = []
 segment_l = []
 
@@ -339,7 +344,6 @@ def dry_run():
      """
      
     start = time.time()
-    conn.execute(segment_t.delete())
     s = select([word_t])
     words = conn.execute(s)
     newly_solved = 0
@@ -384,7 +388,8 @@ def testme(k, r):
             print 'oku_reading[%s]' % s.oku_segment.reading
         else:
             print
-                        
+
+
 if __name__ == "__main__":
 #    testme(u'漢字', u'かんじ')
 #    testme(u"小牛", u"こうし")
@@ -418,13 +423,14 @@ if __name__ == "__main__":
 #    testme(u"シリアルＡＴＡ", u"シリアルエーティーエー")
 #    testme(u"自動金銭出入機", u"じどうきんせんしゅつにゅうき")    
 
+
     fill_solutions() 
 #    print_stats()     
 #    dry_run()
 
 
 #    testme(u"全国津々浦々", u"ぜんこくつつうらうら")
-#   testme(u"酒機嫌", u"ささきげん")
+#    testme(u"酒機嫌", u"ささきげん")
 #    testme(u"四日市ぜんそく", u"よっかいちぜんそく")
 #    testme(u"お腹", u"おなか")
 #    testme(u"今日", u"きょう")
