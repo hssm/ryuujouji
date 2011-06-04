@@ -3,7 +3,6 @@
 #License: GPLv3; http://www.gnu.org/licenses/gpl.txt
 
 import time
-import copy
 from sqlalchemy import MetaData
 from sqlalchemy.sql import select, and_, or_, bindparam
 
@@ -23,7 +22,6 @@ segment_t = meta.tables['segment']
 
 r_select = select([reading_t.c.id, reading_t.c.reading]).\
                   where(reading_t.c.character==bindparam('character'))
-
 
 class SegmentTag:
     """Enums for types of transformations of readings."""

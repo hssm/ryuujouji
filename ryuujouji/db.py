@@ -8,13 +8,15 @@ import codecs
 from sqlalchemy import create_engine, Table, Column, Unicode, \
                        String, Boolean, Integer, ForeignKey, MetaData
 from sqlalchemy.sql import select, and_, or_
+filedir = os.path.dirname(__file__)
+dbdir = os.path.join(os.path.dirname(filedir), 'dbs')
 
-READINGS_PATH = "../dbs/readings.sqlite"
-JMDICT_PATH = "../dbs/jmdict.sqlite"
-KANJIDIC_PATH = "../dbs/kanjidic.sqlite"
-OTHER_READINGS_PATH = "../dbs/other_readings"
+READINGS_PATH = os.path.join(dbdir, 'readings.sqlite')
+JMDICT_PATH = os.path.join(dbdir, 'jmdict.sqlite')
+KANJIDIC_PATH = os.path.join(dbdir, 'kanjidic.sqlite')
+OTHER_READINGS_PATH = os.path.join(dbdir, 'other_readings')
 
-#readings
+
 r_meta = MetaData()
 r_engine = None
 
