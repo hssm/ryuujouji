@@ -97,10 +97,7 @@ def get_readings(word, reading):
     
     global solutions
     solutions = []
-    
-    if isinstance(word, list):
-        print 'yes'
-    
+
     #FIXME: This solution is ugly and produces unexpected behaviour
     #(modifying input word). This should be done properly below.
     #replace all 々 with their respective kanji
