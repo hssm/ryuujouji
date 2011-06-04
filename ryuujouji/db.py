@@ -8,6 +8,7 @@ import codecs
 from sqlalchemy import create_engine, Table, Column, Unicode, \
                        String, Boolean, Integer, ForeignKey, MetaData
 from sqlalchemy.sql import select, and_, or_
+
 filedir = os.path.dirname(__file__)
 dbdir = os.path.join(os.path.dirname(filedir), 'dbs')
 
@@ -114,7 +115,6 @@ def db_populate_words():
     jd_meta.bind = jd_engine
     jd_meta.reflect()
 
-
     k_ele = jd_meta.tables['k_ele']
     r_ele = jd_meta.tables['r_ele']
     re_restr = jd_meta.tables['re_restr']
@@ -153,9 +153,8 @@ def get_connection():
 
 
 if __name__ == "__main__":
-    if True:
-        try:
-            os.remove(READINGS_PATH)
-        except:
-            pass
+    try:
+        os.remove(READINGS_PATH)
+    except:
+        pass
     init()

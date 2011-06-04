@@ -67,6 +67,7 @@ class SegmentOku:
         self.tag = tag
         self.reading = reading
 
+
 class Tree:
     parent = None
     segment = None
@@ -85,6 +86,7 @@ class Tree:
             p = p.parent
         segments.reverse()
         return segments
+
 
 solutions = []
 segments = []
@@ -303,6 +305,8 @@ def save_found():
 
 
 def fill_solutions():
+    global z
+    global yy
     start = time.time()
     conn.execute(segment_t.delete())
     s = select([word_t])
@@ -310,6 +314,7 @@ def fill_solutions():
     goal = len(words)
     save_now = 0
     total = 0
+
     i = 0
     for word in words:
         segments = get_readings(word.keb, word.reb)
@@ -330,7 +335,6 @@ def fill_solutions():
             print "Progress %s %% in %s seconds" % ((float(total) / goal)*100,
                                                     (time.time() - start))
     save_found()
-
     print 'took %s seconds' % (time.time() - start)
 
 def dry_run():
@@ -420,7 +424,7 @@ if __name__ == "__main__":
 
 
     fill_solutions() 
-#    print_stats()     
+    print_stats()     
 #    dry_run()
 
 
