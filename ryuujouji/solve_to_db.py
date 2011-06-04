@@ -31,8 +31,6 @@ def save_found():
 
 
 def fill_solutions():
-    global z
-    global yy
     start = time.time()
     conn.execute(segment_t.delete())
     s = select([word_t])
@@ -50,9 +48,6 @@ def fill_solutions():
             segment_l.append({'word_id':word.id,
                               'reading_id':seg.reading_id,
                               'index':seg.index})
-#        i += 1
-#        if i > 10000:
-#            return
         save_now += 1
         if save_now > 20000:
             save_now = 0
@@ -161,4 +156,4 @@ if __name__ == "__main__":
 #    testme(u"今日", u"きょう")
 #    testme(u"当り", u"あたり")
 
-#There are 159203 entries in JMdict. A solution has been found for 131418 of them. (82%)
+#There are 159203 entries in JMdict. A solution has been found for 131416 of them. (82%)
