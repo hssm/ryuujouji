@@ -59,13 +59,11 @@ class SegmentOku:
 class Tree:
     parent = None
     segment = None
-    next_word = None
     next_reading = None
     
-    def __init__(self, parent, segment, next_word=0, next_reading=0):
+    def __init__(self, parent, segment, next_reading=0):
         self.parent = parent
         self.segment = segment
-        self.next_word = next_word
         self.next_reading = next_reading
       
     def get_branch_as_list(self):       
@@ -121,6 +119,7 @@ def solve_reading(word, reading):
     branches_at[0].append(root)
     usable_branches = 1
     for w_index, w_char in enumerate(word):
+
         #No solvable branches left. Terminate early
         if usable_branches == 0:
             break
@@ -139,7 +138,7 @@ def solve_reading(word, reading):
             usable_branches += solve_character(word, w_index, reading,
                                               branches_here, branches_at)
     for l in branches_at[-1]:
-        if l.next_word == len(word) and l.next_reading == len(reading):
+        if l.next_reading == len(reading):
             solutions.append(l.get_branch_as_list())
     return solutions
 
@@ -156,7 +155,7 @@ def solve_kana(w_char, w_index, reading, branches, branches_at):
     
         if w_char == r_char:
             s = Segment(SegmentTag.Kana, w_char, w_index, w_char, 0, r_char)
-            branch = Tree(branch, s, w_index+1, r_index+1)
+            branch = Tree(branch, s, r_index+1)
             branches_at[w_index+1].append(branch)
             n_new += 1
     return n_new
@@ -244,7 +243,6 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                 elif not kr_is_kata and is_kata(r[0]):
                     r = kata_to_hira(r)
                      
-                    
                 #Okurigana branch (if it has any)
                 if o is not u'':                       
                     #Try all okurigana variants
@@ -256,8 +254,7 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                                           cr.id, reading[:rl+ol])
                             oseg = SegmentOku(otag, ov)
                             seg.oku_segment = oseg
-                            n_branch = Tree(branch, seg, w_index+1+ol,
-                                            r_index+rl+ol)
+                            n_branch = Tree(branch, seg, r_index+rl+ol)
                             branches_at[w_index+1+ol].append(n_branch)
                             new_branches += 1
     
@@ -269,7 +266,7 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                         seg = Segment(tag, w_char, w_index, cr.reading, cr.id,
                         reading[:rl+ol])
             
-                        n_branch = Tree(branch, seg, w_index+1, r_index+rl)
+                        n_branch = Tree(branch, seg, r_index+rl)
                         branches_at[w_index+1].append(n_branch)
                         new_branches += 1
                         
@@ -283,11 +280,9 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                                               w_index, cr.reading, cr.id,
                                 reading[:rl+ol])
 
-                                n_branch = Tree(branch, seg, w_index+2,
-                                                r_index+rl)
+                                n_branch = Tree(branch, seg, r_index+rl)
                                 branches_at[w_index+2].append(n_branch)
                                 new_branches += 1
-        
     return new_branches    
             
 
@@ -424,10 +419,10 @@ if __name__ == "__main__":
 #    testme(u"自動金銭出入機", u"じどうきんせんしゅつにゅうき")    
 
     fill_solutions() 
-    print_stats()     
+#    print_stats()     
 #    dry_run()
 
-#    testme(u"日本刀", u"にほんとう")
+
 #    testme(u"全国津々浦々", u"ぜんこくつつうらうら")
 #   testme(u"酒機嫌", u"ささきげん")
 #    testme(u"四日市ぜんそく", u"よっかいちぜんそく")
