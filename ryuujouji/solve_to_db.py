@@ -13,21 +13,26 @@ meta.bind = conn.engine
 meta.reflect()
 word_t = meta.tables['word']
 segment_t = meta.tables['segment']
+tag_t = meta.tables['tag']
 
 found_l = []
 segment_l = []
+tag_l = []
 
 def save_found():
     global found_l
     global segment_l
+    global tag_l
     
     u = word_t.update().where(word_t.c['id']==
                               bindparam('word_id')).\
                               values(found=bindparam('found'))
     conn.execute(u, found_l)
     conn.execute(segment_t.insert(), segment_l)
+    conn.execute(tag_t.insert(), tag_l)
     found_l = []    
     segment_l = []
+    tag_l = []
 
 
 def fill_solutions():
@@ -39,16 +44,22 @@ def fill_solutions():
     save_now = 0
     total = 0
 
-    i = 0
+    seg_id = 0
     for word in words:
         segments = get_readings(word.keb, word.reb)
         for seg in segments:
+            seg_id += 1
             #print 'seg == ' , seg.unit
             found_l.append({'word_id':word.id, 'found':True})
-            segment_l.append({'word_id':word.id,
+            segment_l.append({'id':seg_id,
+                              'word_id':word.id,
                               'reading_id':seg.reading_id,
                               'nth_kanji':seg.nth_kanji,
                               'nth_kanjir':seg.nth_kanjir})
+            for tag in seg.tags:
+                tag_l.append({'segment_id':seg_id,
+                              'tag':tag})
+
         save_now += 1
         if save_now > 20000:
             save_now = 0
@@ -103,13 +114,10 @@ def testme(k, r):
         print 'reading[%s]' % s.reading,
         print 'nth_kanji[%s]' % s.nth_kanji,
         print 'nth_kanjir[%s]' % s.nth_kanjir,
-        print 'tag[%s]' % s.tag,
+        print 'tags%s' % s.tags,
         print 'dic_reading[%s]' % s.dic_reading,
         print 'reading_id[%s]' % s.reading_id,
-        if s.oku_segment is not None:
-            print 'oku_reading[%s]' % s.oku_segment.reading
-        else:
-            print
+        print
 
 
 if __name__ == "__main__":
@@ -145,7 +153,7 @@ if __name__ == "__main__":
 #    testme(u"シリアルＡＴＡ", u"シリアルエーティーエー")
 #    testme(u"自動金銭出入機", u"じどうきんせんしゅつにゅうき")
 #    testme(u"作り茸", u"ツクリタケ")    
-     
+#    testme(u"全国津々浦々", u"ぜんこくつつうらうら")     
 
 
     fill_solutions() 
@@ -153,7 +161,6 @@ if __name__ == "__main__":
 #    dry_run()
 
 #    testme(u"燃やす", u"もす")
-#    testme(u"全国津々浦々", u"ぜんこくつつうらうら")
 #    testme(u"酒機嫌", u"ささきげん")
 #    testme(u"四日市ぜんそく", u"よっかいちぜんそく")
 #    testme(u"お腹", u"おなか")

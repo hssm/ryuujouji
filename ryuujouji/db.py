@@ -35,13 +35,16 @@ word_t = Table('word', r_meta,
                Column('found', Boolean, default=False))
 
 segment_t = Table('segment', r_meta,
-                   Column('id', Integer, primary_key=True),
+                   Column('id', Integer, primary_key=True, autoincrement=False),
                    Column('word_id', Integer, ForeignKey('word.id')),
                    Column('reading_id', Integer, ForeignKey('reading.id')),
-                   Column('tag', Integer),
-                   Column('tag_info', Unicode),
-                   Column('index', Integer),
-                   Column('reverse_index', Integer))
+                   Column('nth_kanji', Integer),
+                   Column('nth_kanjir', Integer))
+
+tag_t = Table('tag', r_meta,
+               Column('id', Integer, primary_key=True),
+               Column('segment_id', Integer, ForeignKey('segment.id')),
+               Column('tag', Integer, default=False))
 
 
 def init():
