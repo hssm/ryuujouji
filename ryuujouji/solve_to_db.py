@@ -47,7 +47,8 @@ def fill_solutions():
             found_l.append({'word_id':word.id, 'found':True})
             segment_l.append({'word_id':word.id,
                               'reading_id':seg.reading_id,
-                              'index':seg.index})
+                              'nth_kanji':seg.nth_kanji,
+                              'nth_kanjir':seg.nth_kanjir})
         save_now += 1
         if save_now > 20000:
             save_now = 0
@@ -75,7 +76,7 @@ def dry_run():
         else:
             if len(segments) > 0:
                 newly_solved += 1
-                #print "New found word %s" % word.keb, word.reb
+                print "New found word %s" % word.keb, word.reb
     print "The changes will solve another %s entries. " % newly_solved
 
 
@@ -100,7 +101,8 @@ def testme(k, r):
     for s in segments:
         print 'character[%s]' % s.character,
         print 'reading[%s]' % s.reading,
-        print 'index[%s]' % s.index,
+        print 'nth_kanji[%s]' % s.nth_kanji,
+        print 'nth_kanjir[%s]' % s.nth_kanjir,
         print 'tag[%s]' % s.tag,
         print 'dic_reading[%s]' % s.dic_reading,
         print 'reading_id[%s]' % s.reading_id,
@@ -141,14 +143,16 @@ if __name__ == "__main__":
 #    testme(u"糶り", u"せり")       
 #    testme(u"バージョン", u"バージョン")
 #    testme(u"シリアルＡＴＡ", u"シリアルエーティーエー")
-#    testme(u"自動金銭出入機", u"じどうきんせんしゅつにゅうき")    
+#    testme(u"自動金銭出入機", u"じどうきんせんしゅつにゅうき")
+#    testme(u"作り茸", u"ツクリタケ")    
+     
 
 
     fill_solutions() 
     print_stats()     
 #    dry_run()
 
-
+#    testme(u"燃やす", u"もす")
 #    testme(u"全国津々浦々", u"ぜんこくつつうらうら")
 #    testme(u"酒機嫌", u"ささきげん")
 #    testme(u"四日市ぜんそく", u"よっかいちぜんそく")
@@ -156,6 +160,7 @@ if __name__ == "__main__":
 #    testme(u"今日", u"きょう")
 #    testme(u"当り", u"あたり")
 
-#There are 166492 entries in JMdict. A solution has been found for 133988 of them. (80%)
+
 #^Updated JMdict
+#There are 159247 entries in JMdict. A solution has been found for 131473 of them. (82%)
 #There are 159203 entries in JMdict. A solution has been found for 131416 of them. (82%)

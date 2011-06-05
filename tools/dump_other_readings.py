@@ -45,7 +45,7 @@ def get_manual_additions():
     useful additions."""
     
     #These are wide latin characters.
-    extra = ['ｍ,エム', 'ｓ,エス']
+    extra = [u'ｍ,エム', u'ｓ,エス', u'Ｎ,エン', u'ｎ,エン']
     return extra
 
 if __name__ == "__main__":

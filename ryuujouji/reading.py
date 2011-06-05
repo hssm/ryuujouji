@@ -34,22 +34,22 @@ class Segment:
     tag = None
     #The character we are solving
     character = None
-    #the nth character in the word that this segment starts at
-    index = None
-    #the dictionary reading of the character
+    #The nth kanji in the word
+    nth_kanji = None
+    #Like index, but nth from the right
+    nth_kanjir = None
+    #The dictionary reading of the character
     dic_reading = None
-    #the database ID of the reading used to solve this segment
+    #The database ID of the reading used to solve this segment
     reading_id = None
-    #the reading of this segment as it appears in the word
+    #The reading of this segment as it appears in the word
     reading = None
     #A SegmentOku object with information on the reading's Okurigana
     oku_segment = None
     
-    def __init__(self, tag, character, index, dic_reading, reading_id,
-                 reading):
+    def __init__(self, tag, character, dic_reading, reading_id, reading):
         self.tag = tag
         self.character = character
-        self.index = index
         self.dic_reading = dic_reading
         self.reading_id = reading_id
         self.reading = reading
@@ -57,7 +57,7 @@ class Segment:
 class SegmentOku:
     #A SegmentOkuTag denoting the type of transformation of the reading.
     tag = None
-    #the reading of this segment as it appears in the word
+    #The reading of this segment as it appears in the word
     reading = None    
     
     def __init__(self, tag, reading):
@@ -68,17 +68,44 @@ class SegmentOku:
 class Tree:
     parent = None
     segment = None
-    next_reading = None
+    #The index in the reading that the next segment starts at
+    next_reading = 0
+    #Keep track of number of kanji in the branch (to figure out indexes later)
+    k_in_branch = -1
+    is_kana = False
     
-    def __init__(self, parent, segment, next_reading=0):
+    def __init__(self, parent, segment):
+        #If not root
+        if segment is not None:
+            #Calculate the next reading index for this branch
+            self.next_reading = parent.next_reading + len(segment.reading)
+
+            #Increment kanji index if it's a kanji. Also, add to k_in_branch
+            #which we use later to calculate the reverse index.
+            if not segment.tag == SegmentTag.Kana:
+                self.k_in_branch = parent.k_in_branch + 1
+                segment.nth_kanji = self.k_in_branch
+            else:
+                self.is_kana = True
+                self.k_in_branch = parent.k_in_branch
+                segment.nth_kanji = None
+
         self.parent = parent
         self.segment = segment
-        self.next_reading = next_reading
-      
-    def get_branch_as_list(self):       
-        segments = [self.segment]
-        p = self.parent
+        
+         
+    def get_branch_as_list(self):
+        #Here's a good place to add the reverse kanji index since 
+        #we're iterating backwards already.
+        indexr = 0
+        segments = []
+        p = self
         while p.segment is not None:
+            if p.segment.tag is not SegmentTag.Kana:
+                p.segment.nth_kanjir = indexr
+                indexr += 1
+            else:
+                p.segment.nth_kanjir = None
             segments.append(p.segment)
             p = p.parent
         segments.reverse()
@@ -150,9 +177,9 @@ def solve_kana(w_char, w_index, reading, branches, branches_at):
             r_char = hira_to_kata(r_char)
     
         if w_char == r_char:
-            s = Segment(SegmentTag.Kana, w_char, w_index, w_char, 0, r_char)
-            branch = Tree(branch, s, r_index+1)
-            branches_at[w_index+1].append(branch)
+            s = Segment(SegmentTag.Kana, w_char, w_char, 0, r_char)
+            n_branch = Tree(branch, s)
+            branches_at[w_index+1].append(n_branch)
             n_new += 1
     return n_new
 
@@ -215,9 +242,9 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
 
         #The portion of the known word we want to test as okurigana
         known_oku = word[1:ol+1]
-
-        for branch in branches:
-            r_index = branch.next_reading
+        
+        for b in branches:
+            r_index = b.next_reading
             if r_index >= len(g_reading):
                 continue
             
@@ -225,6 +252,9 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
             
             #The portion of the known word we want to test for this character        
             known_r = reading[:rl]
+            #The portion of the known reading we want to test as okurigana
+            known_oku_r = reading[rl:rl+ol]
+            
             kr_is_kata = is_kata(known_r[0])
 
             for (r, tag) in variants:
@@ -236,43 +266,48 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                 elif not kr_is_kata and is_kata(r[0]):
                     r = kata_to_hira(r)
                      
-                #Okurigana branch (if it has any)
+                #Okurigana b (if it has any)
                 if o is not u'':                       
                     #Try all okurigana variants
-                    for (ov, otag) in oku_variants:                       
+                    for (ov, otag) in oku_variants:
+                        #Check for matches in the word
                         if r == known_r and known_oku == ov:
-                            #Attach okurigana segment to base segment
-                            seg = Segment(tag, w_char, w_index, cr.reading,
-                                          cr.id, reading[:rl+ol])
-                            oseg = SegmentOku(otag, ov)
-                            seg.oku_segment = oseg
-                            n_branch = Tree(branch, seg, r_index+rl+ol)
-                            branches_at[w_index+1+ol].append(n_branch)
-                            new_branches += 1
+                            if is_kata(known_oku_r) and not is_kata(ov):
+                                ov = hira_to_kata(ov)
+                            #ALSO check for matches in the reading
+                            if ov == known_oku_r:
+                                #Attach okurigana segment to base segment
+                                seg = Segment(tag, w_char, cr.reading, cr.id,
+                                              reading[:rl]+word[1:1+ol])
+                                oseg = SegmentOku(otag, ov)
+                                seg.oku_segment = oseg
+                                n_branch = Tree(b, seg)
+                                branches_at[w_index+1+ol].append(n_branch)
+                                new_branches += 1
     
-                #No Okurigana branch
+                #No Okurigana b
                 else:
                     #Branch for standard reading with no transformations.
                     if known_r.startswith(r):
-                        #This branch for regular words and readings.
-                        seg = Segment(tag, w_char, w_index, cr.reading, cr.id,
-                        reading[:rl+ol])
+                        #This b for regular words and readings.
+                        seg = Segment(tag, w_char, cr.reading, cr.id,
+                                      reading[:rl+ol])
             
-                        n_branch = Tree(branch, seg, r_index+rl)
+                        n_branch = Tree(b, seg)
                         branches_at[w_index+1].append(n_branch)
                         new_branches += 1
                         
-                        #"Trailing kana" branch, for words like 守り人 = もりびと
+                        #"Trailing kana" b, for words like 守り人 = もりびと
                         #The り is part of the reading for 守 but isn't okurigana.
                         if len(word) > 1:
                             part_kana = word[1]
                             if (is_kana(part_kana) and
                                 part_kana == reading[rl-1]):
                                 seg = Segment(SegmentTag.Kana_trail, w_char,
-                                              w_index, cr.reading, cr.id,
+                                              cr.reading, cr.id,
                                 reading[:rl+ol])
 
-                                n_branch = Tree(branch, seg, r_index+rl)
+                                n_branch = Tree(b, seg)
                                 branches_at[w_index+2].append(n_branch)
                                 new_branches += 1
     return new_branches    

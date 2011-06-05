@@ -40,7 +40,8 @@ segment_t = Table('segment', r_meta,
                    Column('reading_id', Integer, ForeignKey('reading.id')),
                    Column('tag', Integer),
                    Column('tag_info', Unicode),
-                   Column('index', Integer))
+                   Column('index', Integer),
+                   Column('reverse_index', Integer))
 
 
 def init():
