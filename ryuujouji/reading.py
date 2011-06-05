@@ -266,7 +266,7 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                 elif not kr_is_kata and is_kata(r[0]):
                     r = kata_to_hira(r)
                      
-                #Okurigana b (if it has any)
+                #Okurigana branch (if it has any)
                 if o is not u'':                       
                     #Try all okurigana variants
                     for (ov, otag) in oku_variants:
@@ -285,11 +285,11 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                                 branches_at[w_index+1+ol].append(n_branch)
                                 new_branches += 1
     
-                #No Okurigana b
+                #No Okurigana branch
                 else:
                     #Branch for standard reading with no transformations.
                     if known_r.startswith(r):
-                        #This b for regular words and readings.
+                        #This branch for regular words and readings.
                         seg = Segment(tag, w_char, cr.reading, cr.id,
                                       reading[:rl+ol])
             
@@ -297,7 +297,7 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                         branches_at[w_index+1].append(n_branch)
                         new_branches += 1
                         
-                        #"Trailing kana" b, for words like 守り人 = もりびと
+                        #"Trailing kana" branch, for words like 守り人 = もりびと
                         #The り is part of the reading for 守 but isn't okurigana.
                         if len(word) > 1:
                             part_kana = word[1]
