@@ -156,4 +156,6 @@ if __name__ == "__main__":
 #    testme(u"今日", u"きょう")
 #    testme(u"当り", u"あたり")
 
+#There are 166492 entries in JMdict. A solution has been found for 133988 of them. (80%)
+#^Updated JMdict
 #There are 159203 entries in JMdict. A solution has been found for 131416 of them. (82%)

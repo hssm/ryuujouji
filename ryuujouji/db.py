@@ -32,7 +32,7 @@ word_t = Table('word', r_meta,
                Column('id', Integer, primary_key=True),
                Column('keb', Unicode),
                Column('reb', Unicode),
-               Column('found', Boolean))
+               Column('found', Boolean, default=False))
 
 segment_t = Table('segment', r_meta,
                    Column('id', Integer, primary_key=True),
@@ -122,26 +122,26 @@ def db_populate_words():
     word_l = []
     start = time.time()
  
-    s = select([r_ele, re_restr.c['re_restr'], k_ele.c['keb']], from_obj=[
+    s = select([r_ele, re_restr.c['keb'], k_ele.c['keb']], from_obj=[
             r_ele.outerjoin(re_restr, re_restr.c['r_ele_id'] == r_ele.c['id']).\
             outerjoin(k_ele, k_ele.c['entry_ent_seq'] == r_ele.c['entry_ent_seq'])
-            ])
-               
+            ], use_labels=True)
+ 
     results = jd_engine.execute(s)
     
     for r in results:
         #some words have no kanji elements
-        if r.keb is None:
+        if r.k_ele_keb is None:
             continue
         #if this entry has a restricted reb, only apply it to the
         #corresponding keb
-        if r.re_restr is not None:
-            if r.re_restr == r.keb:
-                word_l.append({'keb':r.keb, 'reb':r.reb, 'found':False})
+        if r.re_restr_keb is not None:
+            if r.re_restr_keb == r.k_ele_keb:
+                word_l.append({'keb':r.k_ele_keb, 'reb':r.r_ele_reb})
         else: #otherwise, all rebs apply to all kebs in this entry
             #but some readings don't use kanji, so no related kebs
-            if r.re_nokanji is not None:
-                word_l.append({'keb':r.keb, 'reb':r.reb, 'found':False})
+            if r.r_ele_re_nokanji is not None:
+                word_l.append({'keb':r.k_ele_keb, 'reb':r.r_ele_reb})
 
     r_engine.execute(word_t.insert(), word_l)
     print 'Filling database with word/reading data took '\
