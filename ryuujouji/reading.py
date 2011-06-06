@@ -261,7 +261,6 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                                 ov = hira_to_kata(ov)
                             #ALSO check for matches in the reading
                             if ov == known_oku_r:
-                                #Attach okurigana segment to base segment
                                 seg = Segment(tag, w_char, cr.reading, cr.id,
                                               reading[:rl]+word[1:1+ol])
                                 seg.oku_reading = ov 
