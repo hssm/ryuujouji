@@ -30,8 +30,8 @@ reading_t = Table('reading', r_meta,
 
 word_t = Table('word', r_meta,
                Column('id', Integer, primary_key=True),
-               Column('keb', Unicode),
-               Column('reb', Unicode),
+               Column('keb', Unicode, index=True),
+               Column('reb', Unicode, index=True),
                Column('found', Boolean, default=False))
 
 segment_t = Table('segment', r_meta,
