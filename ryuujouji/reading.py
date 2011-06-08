@@ -10,6 +10,7 @@ from tools import is_u, u_to_i, is_kana, is_kata, kata_to_hira, has_dakuten,\
                   get_dakuten, has_handakuten, get_handakuten, is_hira,\
                   hira_to_kata
 import db
+from segments import SegmentTag, Segment
 
 conn = db.get_connection()
 meta = MetaData()
@@ -19,38 +20,7 @@ reading_t = meta.tables['reading']
 
 r_select = select([reading_t.c.id, reading_t.c.reading]).\
                   where(reading_t.c.character==bindparam('character'))
-
-class SegmentTag:
-    """Enums for types of transformations of readings."""
-    (Kana, Regular, Dakuten, Handakuten, Sokuon, Kana_trail, OkuRegular,
-    OkuSokuon, OkuInflected)  = range(9)
-
-class Segment:
-    """Class to hold segment information."""
-    #A list of SegmentTags denoting the types of transformations of the reading.
-    tags = None
-    #The character we are solving
-    character = None
-    #The nth kanji in the word
-    nth_kanji = None
-    #Like nth_kanji, but nth from the right
-    nth_kanjir = None
-    #The dictionary reading of the character
-    dic_reading = None
-    #The database ID of the reading used to solve this segment
-    reading_id = None
-    #The reading of this segment as it appears in the word
-    reading = None
-    #The reading of this segment's okurigana as it appears in the word
-    oku_reading = None
-    
-    def __init__(self, tag, character, dic_reading, reading_id, reading):
-        self.tags = [tag]
-        self.character = character
-        self.dic_reading = dic_reading
-        self.reading_id = reading_id
-        self.reading = reading
-    
+ 
 class Tree:
     parent = None
     segment = None

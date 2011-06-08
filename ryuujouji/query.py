@@ -6,6 +6,7 @@ from sqlalchemy.sql import select, bindparam, and_, or_
 
 import db
 import tools
+from segments import SegmentTag
 
 conn = db.get_connection()
 meta = MetaData()
@@ -14,6 +15,7 @@ meta.reflect()
 reading_t = meta.tables['reading']
 segment_t = meta.tables['segment']
 word_t = meta.tables['word']
+tag_t = meta.tables['tag']
 
 word_s = select([word_t]).\
                 where(word_t.c['keb'].like(bindparam('character')))
@@ -23,16 +25,10 @@ word_read_s = select([word_t, segment_t],\
                      word_t.c['id']==segment_t.c['word_id']))
 
 
-def words_with_char(char):
-    """Returns a list of database rows (as tuples) of every word in the 
-    database that contains char."""
-    
-    words = conn.execute(word_s, character='%'+char+'%').fetchall()
-    return words
-
 def reading_id(char, reading):
     """Returns the database id of the reading of char. Reading can be either
     hiragana or katakana (on or kun readings can be found with either)."""
+    
     #Get both the hiragana and katakana form of reading
     if tools.is_kata(reading[0]):
         k_reading = reading
@@ -50,16 +46,39 @@ def reading_id(char, reading):
     else:
         return result[0].id
 
-def words_with_char_and_reading(char, reading, **kwargs):
-    print kwargs
-    r_id = reading_id(char, reading)   
-    result = conn.execute(word_read_s, reading_id=r_id)
+def contains_char(char, **kwargs):
+    """Returns a list of database rows (as tuples) of every word in the 
+    database that contains char."""
+
+    count = kwargs.get('count', 1)
+        
+    in_keb = '%%'
+    if count > 0:
+        for n in range(0, count):
+            in_keb += '%s%%' % char
+        words = conn.execute(word_s, character=in_keb).fetchall()
+        return words
+    return []
+
+def contains_char_reading(char, reading, **kwargs):
+    
+    tags = kwargs.get('tags', ())
+    r_id = reading_id(char, reading)
+    query = word_read_s
+    print tags
+    if len(tags) > 0:
+        query = word_read_s.\
+        select_from(segment_t.join(tag_t,
+                                   and_(tag_t.c['segment_id']==segment_t.c['id'],
+                                   tag_t.c['tag'].in_(tags))))      
+    result = conn.execute(query, reading_id=r_id).fetchall()
     return result
     
 if __name__ == '__main__':
-    #for word in words_with_char(u'新'):
-    #    print word.keb, word.reb
-        
-    for word in words_with_char_and_reading(u'人', u'ひと', tags=(0,5,2)):
-        pass #print word.keb, word.reb
-    
+#    for word in contains_char(u'人', count=2):
+#        print word.keb, word.reb
+    tags = [SegmentTag.Dakuten, SegmentTag.Handakuten]
+    results = contains_char_reading(u'人', u'ひと', tags=tags)
+    for word in results:
+        print word.keb, '==', word.reb, word.nth_kanji
+    print "Found %s" % len(results)
