@@ -29,6 +29,9 @@ def reading_id(char, reading):
     """Returns the database id of the reading of char. Reading can be either
     hiragana or katakana (on or kun readings can be found with either)."""
     
+    if len(reading) == 0:
+        return None
+    
     #Get both the hiragana and katakana form of reading
     if tools.is_kata(reading[0]):
         k_reading = reading
@@ -61,16 +64,28 @@ def contains_char(char, **kwargs):
     return []
 
 def contains_char_reading(char, reading, **kwargs):
+    """Returns a list of database rows (as tuples) of every word in the 
+    database that contains char　with reading."""
     
     tags = kwargs.get('tags', ())
+    index = kwargs.get('index', None)
+    
     r_id = reading_id(char, reading)
     query = word_read_s
-    print tags
+
     if len(tags) > 0:
-        query = word_read_s.\
+        query = query.\
         select_from(segment_t.join(tag_t,
                                    and_(tag_t.c['segment_id']==segment_t.c['id'],
-                                   tag_t.c['tag'].in_(tags))))      
+                                   tag_t.c['tag'].in_(tags))))    
+    
+    if index is not None:
+        if index < 0:
+            rindex = (index*-1)-1
+            query = query.where(segment_t.c['nth_kanjir']==rindex)
+        else:
+            query = query.where(segment_t.c['nth_kanji']==index)
+      
     result = conn.execute(query, reading_id=r_id).fetchall()
     return result
     
@@ -78,7 +93,7 @@ if __name__ == '__main__':
 #    for word in contains_char(u'人', count=2):
 #        print word.keb, word.reb
     tags = [SegmentTag.Dakuten, SegmentTag.Handakuten]
-    results = contains_char_reading(u'人', u'ひと', tags=tags)
+    results = contains_char_reading(u'立', u'たて')
     for word in results:
         print word.keb, '==', word.reb, word.nth_kanji
     print "Found %s" % len(results)
