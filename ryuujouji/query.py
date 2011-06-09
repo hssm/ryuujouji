@@ -65,7 +65,7 @@ def contains_char(char, **kwargs):
 
 def contains_char_reading(char, reading, **kwargs):
     """Returns a list of database rows (as tuples) of every word in the 
-    database that contains char　with reading."""
+    database that contains char with reading."""
     
     tags = kwargs.get('tags', ())
     index = kwargs.get('index', None)
@@ -93,7 +93,7 @@ if __name__ == '__main__':
 #    for word in contains_char(u'人', count=2):
 #        print word.keb, word.reb
     tags = [SegmentTag.Dakuten, SegmentTag.Handakuten]
-    results = contains_char_reading(u'立', u'たて')
+    results = contains_char_reading(u'包', u'つつ')
     for word in results:
         print word.keb, '==', word.reb, word.nth_kanji
     print "Found %s" % len(results)

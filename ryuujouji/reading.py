@@ -18,7 +18,7 @@ meta.bind = conn.engine
 meta.reflect()
 reading_t = meta.tables['reading']
 
-r_select = select([reading_t.c.id, reading_t.c.reading]).\
+r_select = select([reading_t.c.id, reading_t.c.reading, reading_t.c.okurigana]).\
                   where(reading_t.c.character==bindparam('character'))
  
 class Tree:
@@ -152,7 +152,9 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
         return None
     
     for cr in char_readings:
-        (r, s, o) = cr.reading.partition(".")
+        #(r, s, o) = cr.reading.partition(".")
+        r = cr.reading
+        o = cr.okurigana
         rl = len(r)  #reading length (non-okurigana portion)
         ol = len(o)  #okurigana length
             
@@ -233,7 +235,7 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                             if ov == known_oku_r:
                                 seg = Segment(tag, w_char, cr.reading, cr.id,
                                               reading[:rl]+word[1:1+ol])
-                                seg.oku_reading = ov 
+                                seg.append_oku(ov, o) 
                                 seg.tags.append(otag)
                                 n_branch = Tree(b, seg)
                                 branches_at[w_index+1+ol].append(n_branch)

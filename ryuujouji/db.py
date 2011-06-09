@@ -24,8 +24,9 @@ r_engine = None
 
 reading_t = Table('reading', r_meta,
                   Column('id', Integer, primary_key=True),
-                  Column('character', Unicode(1), index=True),
-                  Column('reading', Unicode, index=True),
+                  Column('character', Unicode(1), index=True, nullable=False),
+                  Column('reading', Unicode, index=True, nullable=False),
+                  Column('okurigana', Unicode, nullable=False),
                   Column('type', String))
 
 word_t = Table('word', r_meta,
@@ -89,22 +90,24 @@ def db_populate_kanji_readings():
                                  kd_reading.c['r_type'] == 'ja_kun'))
     readings = kd_engine.execute(s)
     for r in readings:
-        affix = "none"
         reading = r.reading
         if r.reading[-1] == u"-":
             reading = reading[:-1]
         elif r.reading[0] == u"-":
             reading = reading[1:]
-
+        
+        (re, s, o) = reading.partition(".")
         reading_l.append({'character':r.character_literal,
-                          'reading':reading,
+                          'reading':re,
+                          'okurigana':o,
                           'type':r.r_type})
 
     f = codecs.open(OTHER_READINGS_PATH, encoding='utf-8')
     for line in f:
         line = line.strip('\n')
         (k, s, r) = line.partition(",")
-        reading_l.append({'character':k, 'reading':r, 'type':'other'})
+        reading_l.append({'character':k, 'reading':r, 'type':'other',
+                          'okurigana':u''})
         
     r_engine.execute(reading_t.insert().prefix_with("OR REPLACE"), reading_l)
 

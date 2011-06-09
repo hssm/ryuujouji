@@ -28,3 +28,7 @@ class Segment:
         self.dic_reading = dic_reading
         self.reading_id = reading_id
         self.reading = reading
+        
+    def append_oku(self, oku, orig):
+        self.oku_reading = oku
+        self.dic_reading += u'.%s' % orig

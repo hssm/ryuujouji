@@ -156,8 +156,8 @@ if __name__ == "__main__":
     testme(u"全国津々浦々", u"ぜんこくつつうらうら")     
 
 
-#    fill_solutions() 
-#    print_stats()     
+    fill_solutions() 
+    print_stats()     
 #    dry_run()
 
 #    testme(u"燃やす", u"もす")
