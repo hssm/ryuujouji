@@ -133,7 +133,7 @@ def solve_kana(w_char, w_index, reading, branches, branches_at):
             r_char = hira_to_kata(r_char)
     
         if w_char == r_char:
-            s = Segment(SegmentTag.Kana, w_char, w_char, 0, r_char)
+            s = Segment(SegmentTag.Kana, w_char, w_char, 0, reading[r_index])
             n_branch = Tree(branch, s)
             branches_at[w_index+1].append(n_branch)
             n_new += 1
