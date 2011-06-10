@@ -184,9 +184,7 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                 variants.append((soku_r, SegmentTag.Sokuon))
 
         if o is not u'':
-            #we're assuming okurigana is always hiragana
-            #if it's ever changed, make sure the reading is grabbed from
-            #reading, not o, to keep the original characters
+            #The readings from kanjidic always have hiragana okurigana
             oku_variants.append((o, SegmentTag.OkuRegular))
             
             oku_last_k = o[len(o)-1]
@@ -228,13 +226,18 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                     #Try all okurigana variants
                     for (ov, otag) in oku_variants:
                         #Check for matches in the word
+                        
+                        #Note: okurigana in the word is always hiragana.
+                        #However, the reading might still have it as katakana.
+                        #If it is, convert the oku variant to katakana also
+                        #so we can compare them.
                         if r == known_r and known_oku == ov:
                             if is_kata(known_oku_r) and not is_kata(ov):
                                 ov = hira_to_kata(ov)
                             #ALSO check for matches in the reading
                             if ov == known_oku_r:
                                 seg = Segment(tag, w_char, cr.reading, cr.id,
-                                              reading[:rl]+word[1:1+ol])
+                                              reading[:rl+ol])
                                 seg.append_oku(ov, o) 
                                 seg.tags.append(otag)
                                 n_branch = Tree(b, seg)

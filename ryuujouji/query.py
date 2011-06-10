@@ -93,7 +93,7 @@ if __name__ == '__main__':
 #    for word in contains_char(u'人', count=2):
 #        print word.keb, word.reb
     tags = [SegmentTag.Dakuten, SegmentTag.Handakuten]
-    results = contains_char_reading(u'包', u'つつ')
+    results = contains_char_reading(u'人', u'じん')
     for word in results:
-        print word.keb, '==', word.reb, word.nth_kanji
+        print word.keb, word.reb
     print "Found %s" % len(results)

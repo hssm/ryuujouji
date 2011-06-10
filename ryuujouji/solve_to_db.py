@@ -154,10 +154,12 @@ if __name__ == "__main__":
     testme(u"自動金銭出入機", u"じどうきんせんしゅつにゅうき")
     testme(u"作り茸", u"ツクリタケ")    
     testme(u"全国津々浦々", u"ぜんこくつつうらうら")     
-
-
-    fill_solutions() 
-    print_stats()     
+    testme(u"別荘", u"ベッソウ")
+    testme(u"守り人", u"モリビト")
+    testme(u"建て替える", u"タテカエル")
+    testme(u"一つ", u"ヒトツ")
+#    fill_solutions() 
+#    print_stats()     
 #    dry_run()
 
 #    testme(u"燃やす", u"もす")
