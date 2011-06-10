@@ -265,7 +265,7 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                                 w_trail = hira_to_kata(w_trail)
                                 
                             if (is_kana(w_trail) and w_trail == r_trail):
-                                seg = Segment(SegmentTag.Kana_trail, w_char,
+                                seg = Segment(SegmentTag.KanaTrail, w_char,
                                               cr.reading, cr.id,
                                 reading[:rl+ol])
 

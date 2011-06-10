@@ -1,6 +1,6 @@
 class SegmentTag:
     """Enums for types of transformations of readings."""
-    (Kana, Regular, Dakuten, Handakuten, Sokuon, Kana_trail, OkuRegular,
+    (Kana, Regular, Dakuten, Handakuten, Sokuon, KanaTrail, OkuRegular,
     OkuSokuon, OkuInflected)  = range(9)
 
 class Segment:
