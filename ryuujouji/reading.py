@@ -190,7 +190,7 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
             oku_variants.append((o, SegmentTag.OkuRegular))
             
             oku_last_k = o[len(o)-1]
-            if oku_last_k == u'つ':                        
+            if oku_last_k == u'つ':
                 soku_o = o[:-1] + u'っ'
                 oku_variants.append((soku_o, SegmentTag.OkuSokuon))
                 
@@ -256,9 +256,12 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                         #"Trailing kana" branch, for words like 守り人 = もりびと
                         #The り is part of the reading for 守 but isn't okurigana.
                         if len(word) > 1:
-                            part_kana = word[1]
-                            if (is_kana(part_kana) and
-                                part_kana == reading[rl-1]):
+                            w_trail = word[1]
+                            r_trail = reading[rl-1]
+                            if is_kata(r_trail) and not is_kata(w_trail):
+                                w_trail = hira_to_kata(w_trail)
+                                
+                            if (is_kana(w_trail) and w_trail == r_trail):
                                 seg = Segment(SegmentTag.Kana_trail, w_char,
                                               cr.reading, cr.id,
                                 reading[:rl+ol])
