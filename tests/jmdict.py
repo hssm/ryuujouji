@@ -1,11 +1,19 @@
 # -*- coding: utf-8 -*-
 #Copyright (C) 2011 Houssam Salem <ntsp.gm@gmail.com>
 #License: GPLv3; http://www.gnu.org/licenses/gpl.txt
+
 import time
-from sqlalchemy import MetaData
+import os
+import sys
+from sqlalchemy import MetaData, create_engine
 from sqlalchemy.sql import select, bindparam
-from reading import get_readings
-import db
+
+
+from ryuujouji import db
+from ryuujouji import query
+from ryuujouji.reading import get_readings
+
+JMDICT_PATH = os.path.join(db.dbdir, 'jmdict.sqlite')
 
 conn = db.get_connection()
 meta = MetaData()
@@ -15,60 +23,60 @@ word_t = meta.tables['word']
 segment_t = meta.tables['segment']
 tag_t = meta.tables['tag']
 
-found_l = []
-segment_l = []
-tag_l = []
-
-def save_found():
-    global found_l
-    global segment_l
-    global tag_l
+def populate_db():
+    print "Filling database with word/reading data from JMdict..."
     
-    u = word_t.update().where(word_t.c['id']==
-                              bindparam('word_id')).\
-                              values(found=bindparam('found'))
-    conn.execute(u, found_l)
-    conn.execute(segment_t.insert(), segment_l)
-    conn.execute(tag_t.insert(), tag_l)
-    found_l = []    
-    segment_l = []
-    tag_l = []
+    if not os.path.exists(JMDICT_PATH):
+        print "No jmdict database found at %s" % KANJIDIC_PATH
+        print "Cannot continue without it."
+        return
+        
+    jd_engine = create_engine('sqlite:///' + JMDICT_PATH)
+    jd_meta = MetaData()
+    jd_meta.bind = jd_engine
+    jd_meta.reflect()
+
+    k_ele = jd_meta.tables['k_ele']
+    r_ele = jd_meta.tables['r_ele']
+    re_restr = jd_meta.tables['re_restr']
+
+    word_l = []
+    start = time.time()
+ 
+    s = select([r_ele, re_restr.c['keb'], k_ele.c['keb']], from_obj=[
+            r_ele.outerjoin(re_restr, re_restr.c['r_ele_id'] == r_ele.c['id']).\
+            outerjoin(k_ele, k_ele.c['entry_ent_seq'] == r_ele.c['entry_ent_seq'])
+            ], use_labels=True)
+ 
+    results = jd_engine.execute(s)
+    
+    for r in results:
+        #some words have no kanji elements
+        if r.k_ele_keb is None:
+            continue
+        #if this entry has a restricted reb, only apply it to the
+        #corresponding keb
+        if r.re_restr_keb is not None:
+            if r.re_restr_keb == r.k_ele_keb:
+                word_l.append({'word':r.k_ele_keb, 'reading':r.r_ele_reb})
+        else: #otherwise, all rebs apply to all kebs in this entry
+            #but some readings don't use kanji, so no related kebs
+            if r.r_ele_re_nokanji is not None:
+                word_l.append({'word':r.k_ele_keb, 'reading':r.r_ele_reb})
+
+    query.add_words(word_l, solve=False)
+    print 'Filling database with word/reading data took '\
+            '%s seconds' % (time.time() - start)
 
 
 def fill_solutions():
+    print 'Solving segments...(takes about 220 seconds)'
+    query.clear_segments()
+    
     start = time.time()
-    conn.execute(segment_t.delete())
-    s = select([word_t])
-    words = conn.execute(s).fetchall()
-    goal = len(words)
-    save_now = 0
-    total = 0
-
-    seg_id = 0
-    for word in words:
-        segments = get_readings(word.keb, word.reb)
-        for seg in segments:
-            seg_id += 1
-            #print 'seg == ' , seg.unit
-            found_l.append({'word_id':word.id, 'found':True})
-            segment_l.append({'id':seg_id,
-                              'word_id':word.id,
-                              'reading_id':seg.reading_id,
-                              'nth_kanji':seg.nth_kanji,
-                              'nth_kanjir':seg.nth_kanjir})
-            for tag in seg.tags:
-                tag_l.append({'segment_id':seg_id,
-                              'tag':tag})
-
-        save_now += 1
-        if save_now > 20000:
-            save_now = 0
-            save_found()
-            total += 20000
-            print "Progress %s %% in %s seconds" % ((float(total) / goal)*100,
-                                                    (time.time() - start))
-    save_found()
+    query.fill_segments()
     print 'took %s seconds' % (time.time() - start)
+
 
 def dry_run():
     """Don't save any changes to the database, but check if the present
@@ -158,6 +166,7 @@ if __name__ == "__main__":
 #    testme(u"守り人", u"モリビト")
 #    testme(u"建て替える", u"タテカエル")
 #    testme(u"一つ", u"ヒトツ")
+    populate_db()
 #    fill_solutions() 
     print_stats()     
 #    dry_run()
