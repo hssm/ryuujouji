@@ -9,10 +9,10 @@ from sqlalchemy.sql import select, bindparam
 from tools import is_u, u_to_i, is_kana, is_kata, kata_to_hira, has_dakuten,\
                   get_dakuten, has_handakuten, get_handakuten, is_hira,\
                   hira_to_kata
-import db
+import readings_db
 from segments import SegmentTag, Segment
 
-conn = db.get_connection()
+conn = readings_db.get_connection()
 meta = MetaData()
 meta.bind = conn.engine
 meta.reflect()
@@ -68,7 +68,7 @@ class Tree:
         return segments
 
 
-def get_readings(word, reading):
+def solve_reading(word, reading):
     """Returns a list of dictionaries separating the word into portions of
     character-reading pairs that form the word."""
     
@@ -80,14 +80,6 @@ def get_readings(word, reading):
             if k == u'々':
                 word = word.replace(u'々', word[i-1], 1)
     
-    solutions = solve_reading(word, reading)
-    if len(solutions) > 0:
-        return min(solutions, key=len)
-    else:
-        return []
-
-
-def solve_reading(word, reading):
     solutions = []
     root = Tree(None, None)
      
@@ -119,7 +111,11 @@ def solve_reading(word, reading):
     for l in branches_at[-1]:
         if l.next_reading == len(reading):
             solutions.append(l.get_branch_as_list())
-    return solutions
+    
+    if len(solutions) > 0:
+        return min(solutions, key=len)
+    else:
+        return []
 
 
 def solve_kana(w_char, w_index, reading, branches, branches_at):
@@ -273,3 +269,82 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                                 branches_at[w_index+2].append(n_branch)
                                 new_branches += 1
     return new_branches    
+
+
+def test_print(k, r):
+    print
+    print "Solving: %s == %s" % (k, r)
+    segments = solve_reading(k, r)
+
+    for s in segments:
+        print 'character[%s]' % s.character,
+        print 'reading[%s]' % s.reading,
+        print 'nth_kanji[%s]' % s.nth_kanji,
+        print 'nth_kanjir[%s]' % s.nth_kanjir,
+        print 'tags%s' % s.tags,
+        print 'dic_reading[%s]' % s.dic_reading,
+        print 'reading_id[%s]' % s.reading_id,
+        print
+
+if __name__ == "__main__":
+#    test_print(u'漢字', u'かんじ')
+#    test_print(u"小牛", u"こうし")
+#    test_print(u"バス停", u"バスてい")
+#    test_print(u"非常事態", u"ひじょうじたい")
+#    test_print(u"建て替える", u"たてかえる")
+#    test_print(u"小さい", u"ちいさい")
+#    test_print(u"鉄道公安官", u"てつどうこうあんかん")
+#    test_print(u"手紙", u"てがみ")
+#    test_print(u"筆箱", u"ふでばこ")
+#    test_print(u"人人", u"ひとびと")
+#    test_print(u"岸壁", u"がんぺき")
+#    test_print(u"一つ", u"ひとつ")
+#    test_print(u"別荘", u"べっそう")
+#    test_print(u"出席", u"しゅっせき")
+#    test_print(u"結婚", u"けっこん")
+#    test_print(u"分別", u"ふんべつ")   
+#    test_print(u"刈り入れ人", u"かりいれびと")
+#    test_print(u"日帰り", u"ひがえり")        
+#    test_print(u"アリドリ科", u"ありどりか")
+#    test_print(u"赤鷽", u"アカウソ")
+#    test_print(u"重立った", u"おもだった")
+#    test_print(u"刈り手", u"かりて")
+#    test_print(u"働き蟻", u"はたらきあり")
+#    test_print(u"往き交い", u"いきかい")    
+#    test_print(u"積み卸し", u"つみおろし")
+#    test_print(u"包み紙", u"つつみがみ")
+#    test_print(u"守り人", u"もりびと")
+#    test_print(u"糶り", u"せり")       
+#    test_print(u"バージョン", u"バージョン")
+#    test_print(u"シリアルＡＴＡ", u"シリアルエーティーエー")
+#    test_print(u"自動金銭出入機", u"じどうきんせんしゅつにゅうき")
+#    test_print(u"全国津々浦々", u"ぜんこくつつうらうら")
+#    test_print(u"作り茸", u"ツクリタケ")     
+#    test_print(u"別荘", u"ベッソウ")
+#    test_print(u"守り人", u"モリビト")
+#    test_print(u"建て替える", u"タテカエル")
+#    test_print(u"一つ", u"ヒトツ")
+    
+    test_print(u'先程',u'サキホド')
+    test_print(u'先程',u'さきほど')
+    
+    test_print(u'先週',u'センシュウ')
+    test_print(u'先週',u'せんしゅう')
+    
+    test_print(u'姉さん',u'ネーサン')
+    test_print(u'姉さん',u'ねえさん')
+    
+    test_print(u'近寄る',u'チカヨル')
+    test_print(u'近寄る',u'ちかよる')
+    
+    test_print(u'弱気',u'ヨワキ')
+    test_print(u'弱気',u'よわき')
+    
+
+
+#    testme(u"燃やす", u"もす")
+#    testme(u"酒機嫌", u"ささきげん")
+#    testme(u"四日市ぜんそく", u"よっかいちぜんそく")
+#    testme(u"お腹", u"おなか")
+#    testme(u"今日", u"きょう")
+#    testme(u"当り", u"あたり")

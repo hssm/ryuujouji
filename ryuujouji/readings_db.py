@@ -6,20 +6,19 @@ import os
 import time
 import codecs
 from sqlalchemy import create_engine, Table, Column, Unicode, UniqueConstraint,\
-                       String, Boolean, Integer, ForeignKey, MetaData
-from sqlalchemy.sql import select, and_, or_
+                       String, Integer, MetaData
+from sqlalchemy.sql import select, or_
 
 filedir = os.path.dirname(__file__)
-dbdir = os.path.join(filedir, 'dbs')
+db_path = os.path.join(filedir, 'dbs')
 
-READINGS_PATH = os.path.join(dbdir, 'readings.sqlite')
-KANJIDIC_PATH = os.path.join(dbdir, 'kanjidic.sqlite')
-OTHER_READINGS_PATH = os.path.join(dbdir, 'other_readings')
+READINGS_PATH = os.path.join(db_path, 'readings.sqlite')
+KANJIDIC_PATH = os.path.join(db_path, 'kanjidic.sqlite')
+OTHER_READINGS_PATH = os.path.join(db_path, 'other_readings')
 
 
 r_meta = MetaData()
 r_engine = None
-
 
 reading_t = Table('reading', r_meta,
                   Column('id', Integer, primary_key=True),
@@ -29,27 +28,6 @@ reading_t = Table('reading', r_meta,
                   Column('type', String),
                   UniqueConstraint('character', 'reading', 'okurigana')
                   )
-
-word_t = Table('word', r_meta,
-               Column('id', Integer, primary_key=True),
-               Column('word', Unicode, index=True),
-               Column('reading', Unicode, index=True),
-               Column('found', Boolean, default=False, nullable=True),
-               UniqueConstraint('word', 'reading')
-               )
-
-segment_t = Table('segment', r_meta,
-                   Column('id', Integer, primary_key=True, autoincrement=False),
-                   Column('word_id', Integer, ForeignKey('word.id')),
-                   Column('reading_id', Integer, ForeignKey('reading.id')),
-                   Column('nth_kanji', Integer),
-                   Column('nth_kanjir', Integer))
-
-tag_t = Table('tag', r_meta,
-               Column('id', Integer, primary_key=True),
-               Column('segment_id', Integer, ForeignKey('segment.id')),
-               Column('tag', Integer, default=False))
-
 
 def init():
     global r_engine
@@ -70,6 +48,7 @@ def init():
         db_populate_kanji_readings()
     else:
         r_engine = create_engine('sqlite:///' + READINGS_PATH)
+        
         
 def db_populate_kanji_readings():
     print "Filling database with kanji/reading data..."
