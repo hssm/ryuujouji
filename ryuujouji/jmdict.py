@@ -4,25 +4,12 @@
 
 import time
 import os
-
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.sql import select
-
-
-import solutions_db
-import query
-from query import get_readings
-
+from word_query import WordQuery
+from word_db import SolveTag
 JMDICT_PATH = os.path.join('dbs/jmdict.sqlite')
-
-conn = solutions_db.get_connection()
-meta = MetaData()
-meta.bind = conn.engine
-meta.reflect()
-
-word_t = meta.tables['word']
-segment_t = meta.tables['segment']
-tag_t = meta.tables['tag']
+wq = None 
 
 def populate_db():
     print "Filling database with word/reading data from JMdict..."
@@ -65,17 +52,17 @@ def populate_db():
             if r.r_ele_re_nokanji is not None:
                 word_l.append({'word':r.k_ele_keb, 'reading':r.r_ele_reb})
 
-    query.add_words(word_l, solve=False)
+    wq.add_words(word_l, solve=False)
     print 'Filling database with word/reading data took '\
             '%s seconds' % (time.time() - start)
 
 
 def fill_solutions():
     print 'Solving segments...(takes about 220 seconds)'
-    query.clear_segments()
+    wq.clear_segments()
     
     start = time.time()
-    query.fill_segments()
+    wq.solve_new()
     print 'took %s seconds' % (time.time() - start)
 
 
@@ -85,41 +72,36 @@ def dry_run():
      """
      
     start = time.time()
-    s = select([word_t])
-    words = conn.execute(s)
+    words = wq.contains_char(u'%')
+
     newly_solved = 0
     for word in words:
-        segments = get_readings(word.keb, word.reb)
-        if word.found == True:
+        segments = wq.get_readings(word.word, word.reading)
+        if word.solved == SolveTag.Solved:
             if len(segments) == 0:
-                print "Regression for word %s == %s" %(word.keb, word.reb)
+                print "Regression for word %s == %s" %(word.word, word.reading)
         else:
             if len(segments) > 0:
                 newly_solved += 1
-                print "New found word %s" % word.keb, word.reb
+                print "New found word %s" % word.word, word.reading
     print "The changes will solve another %s entries. " % newly_solved
+    print 'took %s seconds' % (time.time() - start)
 
 
 def print_stats():
-    s = select([word_t])
-    words = conn.execute(s).fetchall()
-    n = len(words)
-    
-    s = select([word_t], word_t.c['found'] == True)
-    found = conn.execute(s).fetchall()
-    nf = len(found)
-    
-    percent = float(nf) / float(n) * 100
-    print "There are %s entries in JMdict. A solution has been found for %s"\
-          " of them. (%d%%)" % (n, nf, percent)
+    wq.print_solving_stats()
 
 
 if __name__ == "__main__":
-    solutions_db.set_solutions_path('dbs/testjmdict.sqlite')
-    query.
-    populate_db()
-#   fill_solutions() 
-#    print_stats()     
+    dbpath = 'dbs/jmdict_solutions.sqlite'
+    from word_db import create_db
+    #create_db(dbpath)
+    wq = WordQuery(dbpath)
+    
+#    populate_db()
+   
+#    fill_solutions() 
+    print_stats()     
 #    dry_run()
 
 #There are 159207 entries in JMdict. A solution has been found for 131447 of them. (82%)

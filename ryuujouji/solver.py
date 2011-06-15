@@ -9,14 +9,11 @@ from sqlalchemy.sql import select, bindparam
 from tools import is_u, u_to_i, is_kana, is_kata, kata_to_hira, has_dakuten,\
                   get_dakuten, has_handakuten, get_handakuten, is_hira,\
                   hira_to_kata
-import readings_db
+import reading_db
 from segments import SegmentTag, Segment
 
-conn = readings_db.get_connection()
-meta = MetaData()
-meta.bind = conn.engine
-meta.reflect()
-reading_t = meta.tables['reading']
+conn = reading_db.get_connection()
+reading_t = reading_db.reading_t
 
 r_select = select([reading_t.c.id, reading_t.c.reading, reading_t.c.okurigana]).\
                   where(reading_t.c.character==bindparam('character'))
@@ -48,7 +45,6 @@ class Tree:
 
         self.parent = parent
         self.segment = segment
-        
          
     def get_branch_as_list(self):
         #Here's a good place to add the reverse kanji index since 
