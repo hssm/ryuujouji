@@ -3,7 +3,6 @@
 #License: GPLv3; http://www.gnu.org/licenses/gpl.txt
 
 
-from sqlalchemy import MetaData
 from sqlalchemy.sql import select, bindparam
 
 from tools import is_u, u_to_i, is_kana, is_kata, kata_to_hira, has_dakuten,\
@@ -35,7 +34,7 @@ class Tree:
 
             #Increment kanji index if it's a kanji. Also, add to k_in_branch
             #which we use later to calculate the reverse index.
-            if not segment.tags[0] == SegmentTag.Kana:
+            if segment.is_kanji:
                 self.k_in_branch = parent.k_in_branch + 1
                 segment.nth_kanji = self.k_in_branch
             else:
@@ -53,7 +52,7 @@ class Tree:
         segments = []
         p = self
         while p.segment is not None:
-            if p.segment.tags[0] is not SegmentTag.Kana:
+            if p.segment.is_kanji:
                 p.segment.nth_kanjir = indexr
                 indexr += 1
             else:
@@ -123,9 +122,11 @@ def solve_kana(w_char, w_index, reading, branches, branches_at):
         r_char = reading[r_index]
         if is_kata(w_char) and is_hira(r_char):
             r_char = hira_to_kata(r_char)
+        if is_hira(w_char) and is_kata(r_char):
+            r_char = kata_to_hira(r_char) 
     
         if w_char == r_char:
-            s = Segment(SegmentTag.Kana, w_char, w_char, 0, reading[r_index])
+            s = Segment(None, w_char, w_char, 0, reading[r_index])
             n_branch = Tree(branch, s)
             branches_at[w_index+1].append(n_branch)
             n_new += 1
@@ -336,8 +337,11 @@ if __name__ == "__main__":
     test_print(u'弱気',u'ヨワキ')
     test_print(u'弱気',u'よわき')
     
-
-
+    test_print(u'あの',u'アノ')
+    test_print(u'アノ',u'あの')
+    
+    test_print(u'打っ付ける',u'ぶっつける')
+    
 #    testme(u"燃やす", u"もす")
 #    testme(u"酒機嫌", u"ささきげん")
 #    testme(u"四日市ぜんそく", u"よっかいちぜんそく")

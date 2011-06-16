@@ -1,5 +1,6 @@
 import os
-from sqlalchemy import (create_engine, Table, Column, Unicode,
+from segments import SegmentTag
+from sqlalchemy import (create_engine, Table, Column, Unicode, Boolean, 
                         UniqueConstraint, Enum, Integer, ForeignKey, MetaData)
 
 class InvalidDatabaseException(Exception): pass
@@ -26,15 +27,19 @@ segment_t = Table('segment', meta,
                    Column('id', Integer, primary_key=True, autoincrement=False),
                    Column('word_id', Integer, ForeignKey('word.id')),
                    Column('reading_id', Integer),
+                   Column('is_kanji', Boolean, nullable=False),
                    Column('index', Integer),
                    Column('indexr', Integer))
 
 tag_t = Table('tag', meta,
                Column('id', Integer, primary_key=True),
                Column('segment_id', Integer, ForeignKey('segment.id')),
-               Column('tag', Integer, default=False))
+               Column('tag', Enum(SegmentTag.Regular, SegmentTag.Dakuten,
+                                  SegmentTag.Handakuten, SegmentTag.Sokuon,
+                                  SegmentTag.KanaTrail, SegmentTag.OkuRegular,
+                                  SegmentTag.OkuSokuon, SegmentTag.OkuInflected)))
 
-    
+
 def create_db(db_path):
     """Creates a new word database and returns a WordsDB object for it. If
     db_path already exists, it is overwritten with a new database."""

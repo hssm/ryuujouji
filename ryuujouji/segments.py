@@ -1,6 +1,5 @@
 class SegmentTag:
     """Enums for types of transformations of readings."""
-    Kana = 'Kana'
     Regular = 'Regular'
     Dakuten = 'Dakuten'
     Handakuten = 'Handakuten'
@@ -28,9 +27,17 @@ class Segment:
     reading = None
     #The reading of this segment's okurigana as it appears in the word
     oku_reading = None
+    #If the segment represents a kana character only
+    is_kanji = None
     
-    def __init__(self, tag, character, dic_reading, reading_id, reading):
-        self.tags = [tag]
+    def __init__(self, tags, character, dic_reading, reading_id, reading):
+        if tags is not None:
+            self.tags = [tags]
+            self.is_kanji = True
+        else:
+            self.tags = []
+            self.is_kanji = False
+            
         self.character = character
         self.dic_reading = dic_reading
         self.reading_id = reading_id

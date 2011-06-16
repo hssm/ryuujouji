@@ -8,6 +8,7 @@ from sqlalchemy import MetaData, create_engine
 from sqlalchemy.sql import select
 from word_query import WordQuery
 from word_db import SolveTag
+from solver import solve_reading
 JMDICT_PATH = os.path.join('dbs/jmdict.sqlite')
 wq = None 
 
@@ -60,7 +61,6 @@ def populate_db():
 def fill_solutions():
     print 'Solving segments...(takes about 220 seconds)'
     wq.clear_segments()
-    
     start = time.time()
     wq.solve_new()
     print 'took %s seconds' % (time.time() - start)
@@ -76,7 +76,7 @@ def dry_run():
 
     newly_solved = 0
     for word in words:
-        segments = wq.get_readings(word.word, word.reading)
+        segments = solve_reading(word.word, word.reading)
         if word.solved == SolveTag.Solved:
             if len(segments) == 0:
                 print "Regression for word %s == %s" %(word.word, word.reading)
@@ -95,12 +95,12 @@ def print_stats():
 if __name__ == "__main__":
     dbpath = 'dbs/jmdict_solutions.sqlite'
     from word_db import create_db
-    #create_db(dbpath)
+    create_db(dbpath)
     wq = WordQuery(dbpath)
     
-#    populate_db()
+    populate_db()
    
-#    fill_solutions() 
+    fill_solutions() 
     print_stats()     
 #    dry_run()
 

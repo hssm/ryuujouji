@@ -39,7 +39,23 @@ class WordQuery():
             self.solve_new()
 
     def get_segments(self, word, reading):
-        pass
+        s = select([segment_t],
+from_obj=[segment_t.join(word_t, and_(word_t.c['word']==word,
+                                      word_t.c['reading']==reading, 
+                                      segment_t.c['word_id']==word_t.c['id'])
+                         )
+          ])
+                   
+        segments = self.w_conn.execute(s).fetchall()
+        return segments
+                   
+
+    def get_segment_tags(self, seg_id):
+        s = select([tag_t],
+from_obj=[tag_t.join(segment_t, and_(segment_t.c['id']==seg_id,
+                                     segment_t.c['id']==tag_t.c['segment_id']))])
+        tags = self.w_conn.execute(s).fetchall()
+        return tags
        
     def save_solved(self, solved_l, segment_l, tag_l):
         u = word_t.update().where(word_t.c['id']==
@@ -75,11 +91,11 @@ class WordQuery():
             else:
                 for seg in segments:
                     seg_id += 1
-                    print 'nextseg = ', seg_id
                     solved_l.append({'word_id':word.id, 'solved':SolveTag.Solved})
                     segment_l.append({'id':seg_id,
                                       'word_id':word.id,
                                       'reading_id':seg.reading_id,
+                                      'is_kanji':seg.is_kanji,
                                       'index':seg.nth_kanji,
                                       'indexr':seg.nth_kanjir})
                     for tag in seg.tags:
@@ -126,7 +142,7 @@ class WordQuery():
             return words
         return []
     
-    def contains_char_reading(self, char, reading, **kwargs):
+    def words_by_reading(self, char, reading, **kwargs):
         """Returns a list of database rows (as tuples) of every word in the 
         solutions database that contains char with reading."""
         
@@ -134,6 +150,32 @@ class WordQuery():
         index = kwargs.get('index', None)
         
         r_id = reading_query.get_id(char, reading)
+        query = select_word_with_char_and_reading
+    
+        if len(tags) > 0:
+            query = query.\
+            select_from(self.segment.join\
+                        (self.tag, and_(self.tag.c['segment_id']==self.segment.c['id'],
+                                       self.tag.c['tag'].in_(tags))))    
+        
+        if index is not None:
+            if index < 0:
+                rindex = (index*-1)-1
+                query = query.where(self.segment.c['indexr']==rindex)
+            else:
+                query = query.where(self.segment.c['index']==index)
+        
+        result = self.w_conn.execute(query, reading_id=r_id).fetchall()
+        return result
+
+    def words_by_reading_id(self, reading_id, **kwargs):
+        """Returns a list of database rows (as tuples) of every word in the 
+        solutions database that contains char with reading."""
+        
+        tags = kwargs.get('tags', ())
+        index = kwargs.get('index', None)
+        
+        r_id = reading_id
         query = select_word_with_char_and_reading
     
         if len(tags) > 0:
@@ -160,8 +202,10 @@ class WordQuery():
         s = select([word_t], word_t.c['solved'] == SolveTag.Solved)
         found = self.w_conn.execute(s).fetchall()
         nf = len(found)
-        
-        percent = float(nf) / float(n) * 100
+        if n != 0:
+            percent = float(nf) / float(n) * 100
+        else:
+            percent = 0
         print "There are %s entries in the database. A solution has been found"\
         " for %s of them. (%d%%)" % (n, nf, percent)    
     
@@ -172,7 +216,7 @@ if __name__ == '__main__':
 #    for word in q.contains_char(u'漢'):
 #        print word.word, word.reading
     #tags = [SegmentTag.Dakuten, SegmentTag.Handakuten]
-    #results = q.contains_char_reading(u'漢', u'かん')
+    #results = q.words_by_reading(u'漢', u'かん')
     
     q.clear_words()
     q.add_words([{'word':u'建て替える', 'reading':u'たてかえる'},
@@ -182,7 +226,7 @@ if __name__ == '__main__':
                {'word':u'半分', 'reading':u'はんぶん'},
                {'word':u'一つ', 'reading':u'ひとつ'}])
     
-    results = q.contains_char_reading(u'漢', u'かん')
+    results = q.words_by_reading(u'漢', u'かん')
     
     for word in results:
         print word.word, word.reading
