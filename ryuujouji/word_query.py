@@ -145,32 +145,13 @@ from_obj=[tag_t.join(segment_t, and_(segment_t.c['id']==seg_id,
     def words_by_reading(self, char, reading, **kwargs):
         """Returns a list of database rows (as tuples) of every word in the 
         solutions database that contains char with reading."""
-        
-        tags = kwargs.get('tags', ())
-        index = kwargs.get('index', None)
-        
+              
         r_id = reading_query.get_id(char, reading)
-        query = select_word_with_char_and_reading
-    
-        if len(tags) > 0:
-            query = query.\
-            select_from(self.segment.join\
-                        (self.tag, and_(self.tag.c['segment_id']==self.segment.c['id'],
-                                       self.tag.c['tag'].in_(tags))))    
-        
-        if index is not None:
-            if index < 0:
-                rindex = (index*-1)-1
-                query = query.where(self.segment.c['indexr']==rindex)
-            else:
-                query = query.where(self.segment.c['index']==index)
-        
-        result = self.w_conn.execute(query, reading_id=r_id).fetchall()
-        return result
+        return self.words_by_reading_id(r_id, **kwargs)
 
     def words_by_reading_id(self, reading_id, **kwargs):
         """Returns a list of database rows (as tuples) of every word in the 
-        solutions database that contains char with reading."""
+        solutions database that contains reading_id."""
         
         tags = kwargs.get('tags', ())
         index = kwargs.get('index', None)
@@ -180,16 +161,16 @@ from_obj=[tag_t.join(segment_t, and_(segment_t.c['id']==seg_id,
     
         if len(tags) > 0:
             query = query.\
-            select_from(self.segment.join\
-                        (self.tag, and_(self.tag.c['segment_id']==self.segment.c['id'],
-                                       self.tag.c['tag'].in_(tags))))    
+            select_from(segment_t.join\
+                        (tag_t, and_(tag_t.c['segment_id']==segment_t.c['id'],
+                                       tag_t.c['tag'].in_(tags))))    
         
         if index is not None:
             if index < 0:
                 rindex = (index*-1)-1
-                query = query.where(self.segment.c['indexr']==rindex)
+                query = query.where(segment_t.c['indexr']==rindex)
             else:
-                query = query.where(self.segment.c['index']==index)
+                query = query.where(segment_t.c['index']==index)
         
         result = self.w_conn.execute(query, reading_id=r_id).fetchall()
         return result
@@ -210,23 +191,24 @@ from_obj=[tag_t.join(segment_t, and_(segment_t.c['id']==seg_id,
         " for %s of them. (%d%%)" % (n, nf, percent)    
     
 if __name__ == '__main__':
-    dbpath = 'dbs/test_query.sqlite'
-    word_db.create_db(dbpath)
+    #dbpath = 'dbs/test_query.sqlite'
+    dbpath = 'dbs/jmdict_solutions.sqlite'
+    #word_db.create_db(dbpath)
     q = WordQuery(dbpath)
 #    for word in q.contains_char(u'漢'):
 #        print word.word, word.reading
-    #tags = [SegmentTag.Dakuten, SegmentTag.Handakuten]
+    tags = [SegmentTag.Dakuten, SegmentTag.Handakuten]
     #results = q.words_by_reading(u'漢', u'かん')
     
-    q.clear_words()
-    q.add_words([{'word':u'建て替える', 'reading':u'たてかえる'},
-               {'word':u'漢字', 'reading':u'かんじ'},
-               {'word':u'漢字時代', 'reading':u'かんじじだい'},
-               {'word':u'漢字時代', 'reading':u'かんじじだいおおお'},
-               {'word':u'半分', 'reading':u'はんぶん'},
-               {'word':u'一つ', 'reading':u'ひとつ'}])
+#    q.clear_words()
+#    q.add_words([{'word':u'建て替える', 'reading':u'たてかえる'},
+#               {'word':u'漢字', 'reading':u'かんじ'},
+#               {'word':u'漢字時代', 'reading':u'かんじじだい'},
+#               {'word':u'漢字時代', 'reading':u'かんじじだいおおお'},
+#               {'word':u'半分', 'reading':u'はんぶん'},
+#               {'word':u'一つ', 'reading':u'ひとつ'}])
     
-    results = q.words_by_reading(u'漢', u'かん')
+    results = q.words_by_reading(u'人', u'ひと', tags=tags, index=2)
     
     for word in results:
         print word.word, word.reading

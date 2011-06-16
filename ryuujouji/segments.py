@@ -27,7 +27,7 @@ class Segment:
     reading = None
     #The reading of this segment's okurigana as it appears in the word
     oku_reading = None
-    #If the segment represents a kana character only
+    #If the segment holds a kanji character (instead of kana)
     is_kanji = None
     
     def __init__(self, tags, character, dic_reading, reading_id, reading):
