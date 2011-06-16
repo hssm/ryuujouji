@@ -11,14 +11,14 @@ import word_db
 import reading_query
 from word_db import SolveTag, word_t, segment_t, tag_t
 
-word_s = select([word_t]).\
+select_word_with_char = select([word_t]).\
                 where(word_t.c['word'].like(bindparam('character')))
 
-word_read_s = select([word_t, segment_t],\
+select_word_with_char_and_reading = select([word_t, segment_t],\
                      and_(segment_t.c['reading_id']==bindparam('reading_id'),
                           word_t.c['id']==segment_t.c['word_id']))
 
-unsolved_s = select([word_t], word_t.c['solved']==SolveTag.Unchecked)
+select_unsolved_words = select([word_t], word_t.c['solved']==SolveTag.Unchecked)
 
    
         
@@ -27,9 +27,6 @@ class WordQuery():
     def __init__(self, words_db_path):
         self.w_conn = word_db.get_connection(words_db_path)
         
-    def get_readings(self, word, reading):
-        return solve_reading(word, reading)
-
     def add_words(self, word_list, solve=True):
         """Adds the given words and their readings to the database. The word_list
         argument should be a list of dictionaries of the form
@@ -41,58 +38,61 @@ class WordQuery():
         if solve == True:
             self.solve_new()
 
-    solved_l = []
-    segment_l = []
-    tag_l = []
-    
-    def save_solved(self):
+    def get_segments(self, word, reading):
+        pass
+       
+    def save_solved(self, solved_l, segment_l, tag_l):
         u = word_t.update().where(word_t.c['id']==
                                   bindparam('word_id')).\
                                   values(solved=bindparam('solved'))
     
         #Length checks are there because, for some reason, it seems to add
         #an empty row if the list is just []
-        if len(self.solved_l) > 0:
-            self.w_conn.execute(u, self.solved_l)
-        if len(self.segment_l) > 0:
-            self.w_conn.execute(segment_t.insert(), self.segment_l)
-        if len(self.tag_l) > 0:
-            self.w_conn.execute(tag_t.insert(), self.tag_l)
+        if len(solved_l) > 0:
+            self.w_conn.execute(u, solved_l)
+        if len(segment_l) > 0:
+            self.w_conn.execute(segment_t.insert(), segment_l)
+        if len(tag_l) > 0:
+            self.w_conn.execute(tag_t.insert(), tag_l)
             
-        self.solved_l = []    
-        self.segment_l = []
-        self.tag_l = []
 
     def solve_new(self):
         
         #Find the next segment ID
         count = self.w_conn.execute(func.count(segment_t.c['id'])).fetchall()
         seg_id = count[0][0] #first item of first row is the count
-        new_words = self.w_conn.execute(unsolved_s).fetchall()
+        new_words = self.w_conn.execute(select_unsolved_words).fetchall()
         save_now = 0
 
+        solved_l = []    
+        segment_l = []
+        tag_l = []
+        
         for word in new_words:
-            segments = self.get_readings(word.word, word.reading)
+            segments = solve_reading(word.word, word.reading)
             if len(segments) == 0:
-                self.solved_l.append({'word_id':word.id, 'solved':SolveTag.Unsolvable})
+                solved_l.append({'word_id':word.id, 'solved':SolveTag.Unsolvable})
             else:
                 for seg in segments:
                     seg_id += 1
-        
-                    self.solved_l.append({'word_id':word.id, 'solved':SolveTag.Solved})
-                    self.segment_l.append({'id':seg_id,
+                    print 'nextseg = ', seg_id
+                    solved_l.append({'word_id':word.id, 'solved':SolveTag.Solved})
+                    segment_l.append({'id':seg_id,
                                       'word_id':word.id,
                                       'reading_id':seg.reading_id,
                                       'index':seg.nth_kanji,
                                       'indexr':seg.nth_kanjir})
                     for tag in seg.tags:
-                        self.tag_l.append({'segment_id':seg_id,
+                        tag_l.append({'segment_id':seg_id,
                                            'tag':tag})
             save_now += 1
             if save_now > 20000:
                 save_now = 0
-                self.save_solved()
-        self.save_solved()
+                self.save_solved(solved_l, segment_l, tag_l)
+                solved_l = []
+                segment_l = []
+                tag_l = []
+        self.save_solved(solved_l, segment_l, tag_l)
     
     #TODO
     def remove_word(self, word, reading):
@@ -122,7 +122,7 @@ class WordQuery():
         if count > 0:
             for n in range(0, count):
                 in_keb += '%s%%' % char
-            words = self.w_conn.execute(word_s, character=in_keb).fetchall()
+            words = self.w_conn.execute(select_word_with_char, character=in_keb).fetchall()
             return words
         return []
     
@@ -134,7 +134,7 @@ class WordQuery():
         index = kwargs.get('index', None)
         
         r_id = reading_query.get_id(char, reading)
-        query = word_read_s
+        query = select_word_with_char_and_reading
     
         if len(tags) > 0:
             query = query.\
