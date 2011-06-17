@@ -2,7 +2,7 @@
 #Copyright (C) 2011 Houssam Salem <ntsp.gm@gmail.com>
 #License: GPLv3; http://www.gnu.org/licenses/gpl.txt
 
-from sqlalchemy.sql import select, bindparam, and_, func
+from sqlalchemy.sql import select, bindparam, and_, or_, func
 
 
 from solver import solve_reading
@@ -38,19 +38,62 @@ class WordQuery():
         if solve == True:
             self.solve_new()
 
-    def get_segments(self, word, reading):
-        s = select([segment_t],
-from_obj=[segment_t.join(word_t, and_(word_t.c['word']==word,
-                                      word_t.c['reading']==reading, 
-                                      segment_t.c['word_id']==word_t.c['id'])
-                         )
-          ])
-                   
+    def get_word(self, word, reading):
+        """Returns the database row (as a tuple) for word with reading. If the
+        word/reading combination doesn't exist, returns None."""
+        
+        s = select([word_t], and_(word_t.c['word']==word,
+                                  word_t.c['reading']==reading))
+        word = self.w_conn.execute(s).fetchone()
+        return word
+        
+
+    def words_by_reading(self, char, reading, **kwargs):
+        """Returns a list of database rows (as tuples) of every word in the 
+        solutions database that contains char with reading."""
+              
+        r_id = reading_query.get_id(char, reading)
+        return self.words_by_reading_id(r_id, **kwargs)
+
+    def words_by_reading_id(self, reading_id, **kwargs):
+        """Returns a list of database rows (as tuples) of every word in the 
+        solutions database that contains reading_id."""
+        
+        tags = kwargs.get('tags', ())
+        index = kwargs.get('index', None)
+        
+        r_id = reading_id
+        query = select_word_with_char_and_reading
+    
+        if len(tags) > 0:
+            query = query.\
+            select_from(segment_t.join\
+                        (tag_t, and_(tag_t.c['segment_id']==segment_t.c['id'],
+                                       tag_t.c['tag'].in_(tags))))    
+        
+        if index is not None:
+            if index < 0:
+                rindex = (index*-1)-1
+                query = query.where(segment_t.c['indexr']==rindex)
+            else:
+                query = query.where(segment_t.c['index']==index)
+        
+        result = self.w_conn.execute(query, reading_id=r_id).fetchall()
+        return result
+
+    def segments_by_reading(self, word, reading):
+        word = self.get_word(word, reading)
+        if word is None:
+            return None
+        return self.segments_by_word_id(word.id)
+         
+    def segments_by_word_id(self, word_id):
+        s = select([segment_t], segment_t.c['word_id']==word_id)
         segments = self.w_conn.execute(s).fetchall()
         return segments
-                   
+    
 
-    def get_segment_tags(self, seg_id):
+    def tags_by_segment_id(self, seg_id):
         s = select([tag_t],
 from_obj=[tag_t.join(segment_t, and_(segment_t.c['id']==seg_id,
                                      segment_t.c['id']==tag_t.c['segment_id']))])
@@ -72,12 +115,19 @@ from_obj=[tag_t.join(segment_t, and_(segment_t.c['id']==seg_id,
             self.w_conn.execute(tag_t.insert(), tag_l)
             
 
-    def solve_new(self):
+    def solve_new(self, unsolved=False):
         
         #Find the next segment ID
         count = self.w_conn.execute(func.count(segment_t.c['id'])).fetchall()
         seg_id = count[0][0] #first item of first row is the count
-        new_words = self.w_conn.execute(select_unsolved_words).fetchall()
+        if not unsolved:
+            query = select_unsolved_words
+        else:
+            query = select([word_t],
+                               or_(word_t.c['solved']==SolveTag.Unchecked,
+                                   word_t.c['solved']==SolveTag.Unsolvable))
+            
+        new_words = self.w_conn.execute(query).fetchall()
         save_now = 0
 
         solved_l = []    
@@ -142,38 +192,7 @@ from_obj=[tag_t.join(segment_t, and_(segment_t.c['id']==seg_id,
             return words
         return []
     
-    def words_by_reading(self, char, reading, **kwargs):
-        """Returns a list of database rows (as tuples) of every word in the 
-        solutions database that contains char with reading."""
-              
-        r_id = reading_query.get_id(char, reading)
-        return self.words_by_reading_id(r_id, **kwargs)
 
-    def words_by_reading_id(self, reading_id, **kwargs):
-        """Returns a list of database rows (as tuples) of every word in the 
-        solutions database that contains reading_id."""
-        
-        tags = kwargs.get('tags', ())
-        index = kwargs.get('index', None)
-        
-        r_id = reading_id
-        query = select_word_with_char_and_reading
-    
-        if len(tags) > 0:
-            query = query.\
-            select_from(segment_t.join\
-                        (tag_t, and_(tag_t.c['segment_id']==segment_t.c['id'],
-                                       tag_t.c['tag'].in_(tags))))    
-        
-        if index is not None:
-            if index < 0:
-                rindex = (index*-1)-1
-                query = query.where(segment_t.c['indexr']==rindex)
-            else:
-                query = query.where(segment_t.c['index']==index)
-        
-        result = self.w_conn.execute(query, reading_id=r_id).fetchall()
-        return result
 
     def print_solving_stats(self):
         s = select([word_t])

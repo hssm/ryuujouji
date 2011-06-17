@@ -64,6 +64,7 @@ def db_populate_kanji_readings():
     s = select([kd_reading], or_(kd_reading.c['r_type'] == 'ja_on',
                                  kd_reading.c['r_type'] == 'ja_kun'))
     readings = kd_engine.execute(s)
+
     for r in readings:
         reading = r.reading
         if r.reading[-1] == u"-":
@@ -72,10 +73,18 @@ def db_populate_kanji_readings():
             reading = reading[1:]
         
         (re, s, o) = reading.partition(".")
+        
+        #insert the reading twice, once with the okurigana portion
+        #and once without. If it already had no okurigana it is simply replaced
         reading_l.append({'character':r.character_literal,
                           'reading':re,
                           'okurigana':o,
                           'type':r.r_type})
+        
+        reading_l.append({'character':r.character_literal,
+                  'reading':re,
+                  'okurigana':u'',
+                  'type':r.r_type})
 
     f = codecs.open(OTHER_READINGS_PATH, encoding='utf-8')
     for line in f:

@@ -62,7 +62,7 @@ def fill_solutions():
     print 'Solving segments...(takes about 220 seconds)'
     wq.clear_segments()
     start = time.time()
-    wq.solve_new()
+    wq.solve_new(unsolved=True)
     print 'took %s seconds' % (time.time() - start)
 
 
@@ -83,7 +83,7 @@ def dry_run():
         else:
             if len(segments) > 0:
                 newly_solved += 1
-                print "New found word %s" % word.word, word.reading
+                #print "New found word ", word.word, word.reading
     print "The changes will solve another %s entries. " % newly_solved
     print 'took %s seconds' % (time.time() - start)
 
@@ -104,5 +104,6 @@ if __name__ == "__main__":
     print_stats()     
 #    dry_run()
 
+#There are 159207 entries in the database. A solution has been found for 139520 of them. (87%)
 #There are 159207 entries in JMdict. A solution has been found for 131447 of them. (82%)
 

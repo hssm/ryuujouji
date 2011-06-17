@@ -143,9 +143,8 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
     if char_readings == None:
         print "Shouldn't be here for now."
         return None
-    
+            
     for cr in char_readings:
-        #(r, s, o) = cr.reading.partition(".")
         r = cr.reading
         o = cr.okurigana
         rl = len(r)  #reading length (non-okurigana portion)
@@ -322,29 +321,30 @@ if __name__ == "__main__":
 #    test_print(u"建て替える", u"タテカエル")
 #    test_print(u"一つ", u"ヒトツ")
     
-    test_print(u'先程',u'サキホド')
-    test_print(u'先程',u'さきほど')
+#    test_print(u'先程',u'サキホド')
+#    test_print(u'先程',u'さきほど')
+#    
+#    test_print(u'先週',u'センシュウ')
+#    test_print(u'先週',u'せんしゅう')
+#
+#    test_print(u'姉さん',u'ネエサン')
+#    test_print(u'姉さん',u'ねえさん')
+
+#    test_print(u'近寄る',u'チカヨル')
+#    test_print(u'近寄る',u'ちかよる')
+#
+#    test_print(u'弱気',u'ヨワキ')
+#    test_print(u'弱気',u'よわき')
+#    
+#    test_print(u'あの',u'アノ')
+#    test_print(u'アノ',u'あの')
+#    
+    test_print(u'馬を水辺に導く事は出来るが馬に水を飲ませる事は出来ない',
+               u'うまをみずべにみちびくことはできるがうまにみずをのませることはできない')
     
-    test_print(u'先週',u'センシュウ')
-    test_print(u'先週',u'せんしゅう')
-    
-    test_print(u'姉さん',u'ネーサン')
-    test_print(u'姉さん',u'ねえさん')
-    
-    test_print(u'近寄る',u'チカヨル')
-    test_print(u'近寄る',u'ちかよる')
-    
-    test_print(u'弱気',u'ヨワキ')
-    test_print(u'弱気',u'よわき')
-    
-    test_print(u'あの',u'アノ')
-    test_print(u'アノ',u'あの')
-    
-    test_print(u'打っ付ける',u'ぶっつける')
-    
-#    testme(u"燃やす", u"もす")
-#    testme(u"酒機嫌", u"ささきげん")
-#    testme(u"四日市ぜんそく", u"よっかいちぜんそく")
-#    testme(u"お腹", u"おなか")
-#    testme(u"今日", u"きょう")
-#    testme(u"当り", u"あたり")
+    test_print(u"燃やす", u"もす")
+    test_print(u"酒機嫌", u"ささきげん")
+
+    test_print(u"お腹", u"おなか")
+    test_print(u"今日", u"きょう")
+    test_print(u"当り", u"あたり")
