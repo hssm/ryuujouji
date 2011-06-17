@@ -146,8 +146,8 @@ from_obj=[tag_t.join(segment_t, and_(segment_t.c['id']==seg_id,
                                       'word_id':word.id,
                                       'reading_id':seg.reading_id,
                                       'is_kanji':seg.is_kanji,
-                                      'index':seg.nth_kanji,
-                                      'indexr':seg.nth_kanjir})
+                                      'index':seg.index,
+                                      'indexr':seg.indexr})
                     for tag in seg.tags:
                         tag_l.append({'segment_id':seg_id,
                                            'tag':tag})

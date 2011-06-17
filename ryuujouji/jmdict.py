@@ -59,7 +59,7 @@ def populate_db():
 
 
 def fill_solutions():
-    print 'Solving segments...(takes about 220 seconds)'
+    print 'Solving segments...(takes about 240 seconds)'
     wq.clear_segments()
     start = time.time()
     wq.solve_new(unsolved=True)

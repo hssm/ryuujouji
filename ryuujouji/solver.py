@@ -36,11 +36,11 @@ class Tree:
             #which we use later to calculate the reverse index.
             if segment.is_kanji:
                 self.k_in_branch = parent.k_in_branch + 1
-                segment.nth_kanji = self.k_in_branch
+                segment.index = self.k_in_branch
             else:
                 self.is_kana = True
                 self.k_in_branch = parent.k_in_branch
-                segment.nth_kanji = None
+                segment.index = None
 
         self.parent = parent
         self.segment = segment
@@ -53,10 +53,10 @@ class Tree:
         p = self
         while p.segment is not None:
             if p.segment.is_kanji:
-                p.segment.nth_kanjir = indexr
+                p.segment.indexr = indexr
                 indexr += 1
             else:
-                p.segment.nth_kanjir = None
+                p.segment.indexr = None
             segments.append(p.segment)
             p = p.parent
         segments.reverse()
@@ -66,15 +66,7 @@ class Tree:
 def solve_reading(word, reading):
     """Returns a list of dictionaries separating the word into portions of
     character-reading pairs that form the word."""
-    
-    #FIXME: This solution is ugly and produces unexpected behaviour
-    #(modifying input word). This should be done properly below.
-    #replace all 々 with their respective kanji
-    if word[0] != u'々': #it could be just that character and its name(s)
-        for i,k in enumerate(word):
-            if k == u'々':
-                word = word.replace(u'々', word[i-1], 1)
-    
+        
     solutions = []
     root = Tree(None, None)
      
@@ -137,7 +129,13 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
     new_branches = 0
     w_char = g_word[w_index]
 
-    char_readings = conn.execute(r_select, character=w_char).fetchall() 
+    #replace 々 with its respective kanji
+    if w_char == u'々' and w_index > 0:
+        q_char = g_word[w_index-1]
+    else:
+        q_char = w_char
+
+    char_readings = conn.execute(r_select, character=q_char).fetchall() 
     
     #TODO: Handle non-kanji and non-kana characters
     if char_readings == None:
@@ -241,9 +239,7 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                     #Branch for standard reading with no transformations.
                     if known_r.startswith(r):
                         #This branch for regular words and readings.
-                        seg = Segment(tag, w_char, cr.reading, cr.id,
-                                      reading[:rl+ol])
-            
+                        seg = Segment(tag, w_char, cr.reading, cr.id, reading[:rl+ol])
                         n_branch = Tree(b, seg)
                         branches_at[w_index+1].append(n_branch)
                         new_branches += 1
@@ -258,9 +254,7 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                                 
                             if (is_kana(w_trail) and w_trail == r_trail):
                                 seg = Segment(SegmentTag.KanaTrail, w_char,
-                                              cr.reading, cr.id,
-                                reading[:rl+ol])
-
+                                              cr.reading, cr.id, reading[:rl+ol])
                                 n_branch = Tree(b, seg)
                                 branches_at[w_index+2].append(n_branch)
                                 new_branches += 1
@@ -275,8 +269,8 @@ def test_print(k, r):
     for s in segments:
         print 'character[%s]' % s.character,
         print 'reading[%s]' % s.reading,
-        print 'nth_kanji[%s]' % s.nth_kanji,
-        print 'nth_kanjir[%s]' % s.nth_kanjir,
+        print 'index[%s]' % s.index,
+        print 'indexr[%s]' % s.indexr,
         print 'tags%s' % s.tags,
         print 'dic_reading[%s]' % s.dic_reading,
         print 'reading_id[%s]' % s.reading_id,
@@ -314,13 +308,13 @@ if __name__ == "__main__":
 #    test_print(u"バージョン", u"バージョン")
 #    test_print(u"シリアルＡＴＡ", u"シリアルエーティーエー")
 #    test_print(u"自動金銭出入機", u"じどうきんせんしゅつにゅうき")
-#    test_print(u"全国津々浦々", u"ぜんこくつつうらうら")
+    test_print(u"全国津々浦々", u"ぜんこくつつうらうら")
 #    test_print(u"作り茸", u"ツクリタケ")     
 #    test_print(u"別荘", u"ベッソウ")
 #    test_print(u"守り人", u"モリビト")
 #    test_print(u"建て替える", u"タテカエル")
 #    test_print(u"一つ", u"ヒトツ")
-    
+#    
 #    test_print(u'先程',u'サキホド')
 #    test_print(u'先程',u'さきほど')
 #    
@@ -329,22 +323,16 @@ if __name__ == "__main__":
 #
 #    test_print(u'姉さん',u'ネエサン')
 #    test_print(u'姉さん',u'ねえさん')
-
+#
 #    test_print(u'近寄る',u'チカヨル')
 #    test_print(u'近寄る',u'ちかよる')
 #
 #    test_print(u'弱気',u'ヨワキ')
 #    test_print(u'弱気',u'よわき')
-#    
+##    
 #    test_print(u'あの',u'アノ')
 #    test_print(u'アノ',u'あの')
-#    
-    test_print(u'馬を水辺に導く事は出来るが馬に水を飲ませる事は出来ない',
-               u'うまをみずべにみちびくことはできるがうまにみずをのませることはできない')
     
-    test_print(u"燃やす", u"もす")
-    test_print(u"酒機嫌", u"ささきげん")
-
-    test_print(u"お腹", u"おなか")
-    test_print(u"今日", u"きょう")
-    test_print(u"当り", u"あたり")
+#    
+#    test_print(u'馬を水辺に導く事は出来るが馬に水を飲ませる事は出来ない',
+#               u'うまをみずべにみちびくことはできるがうまにみずをのませることはできない')

@@ -16,9 +16,9 @@ class Segment:
     #The character we are solving
     character = None
     #The nth kanji in the word
-    nth_kanji = None
+    index = None
     #Like nth_kanji, but nth from the right
-    nth_kanjir = None
+    indexr = None
     #The dictionary reading of the character
     dic_reading = None
     #The database ID of the reading used to solve this segment
