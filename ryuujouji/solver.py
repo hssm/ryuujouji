@@ -261,78 +261,94 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
     return new_branches    
 
 
-def test_print(k, r):
-    print
-    print "Solving: %s == %s" % (k, r)
+def print_verbose(k, r):
+    print "%s[%s]" % (k, r)
     segments = solve_reading(k, r)
 
-    for s in segments:
-        print 'character[%s]' % s.character,
-        print 'reading[%s]' % s.reading,
-        print 'index[%s]' % s.index,
-        print 'indexr[%s]' % s.indexr,
-        print 'tags%s' % s.tags,
-        print 'dic_reading[%s]' % s.dic_reading,
-        print 'reading_id[%s]' % s.reading_id,
-        print
+    if len(segments) == 0:
+        print 'unknown'
+    else:
+        for s in segments:
+            print 'character[%s]' % s.character,
+            print 'reading[%s]' % s.reading,
+            print 'index[%s]' % s.index,
+            print 'indexr[%s]' % s.indexr,
+            print 'tags%s' % s.tags,
+            print 'dic_reading[%s]' % s.dic_reading,
+            print 'reading_id[%s]' % s.reading_id,
+            print
+    print
+            
+            
+def print_segments(k, r):
+    print "%s[%s]" % (k, r)
+    segments = solve_reading(k, r)
+
+    if len(segments) == 0:
+        print 'unknown'
+    else:
+        for s in segments:
+            print "%s %s" % (s.character, s.reading)
 
 if __name__ == "__main__":
-#    test_print(u'漢字', u'かんじ')
-#    test_print(u"小牛", u"こうし")
-#    test_print(u"バス停", u"バスてい")
-#    test_print(u"非常事態", u"ひじょうじたい")
-#    test_print(u"建て替える", u"たてかえる")
-#    test_print(u"小さい", u"ちいさい")
-#    test_print(u"鉄道公安官", u"てつどうこうあんかん")
-#    test_print(u"手紙", u"てがみ")
-#    test_print(u"筆箱", u"ふでばこ")
-#    test_print(u"人人", u"ひとびと")
-#    test_print(u"岸壁", u"がんぺき")
-#    test_print(u"一つ", u"ひとつ")
-#    test_print(u"別荘", u"べっそう")
-#    test_print(u"出席", u"しゅっせき")
-#    test_print(u"結婚", u"けっこん")
-#    test_print(u"分別", u"ふんべつ")   
-#    test_print(u"刈り入れ人", u"かりいれびと")
-#    test_print(u"日帰り", u"ひがえり")        
-#    test_print(u"アリドリ科", u"ありどりか")
-#    test_print(u"赤鷽", u"アカウソ")
-#    test_print(u"重立った", u"おもだった")
-#    test_print(u"刈り手", u"かりて")
-#    test_print(u"働き蟻", u"はたらきあり")
-#    test_print(u"往き交い", u"いきかい")    
-#    test_print(u"積み卸し", u"つみおろし")
-#    test_print(u"包み紙", u"つつみがみ")
-#    test_print(u"守り人", u"もりびと")
-#    test_print(u"糶り", u"せり")       
-#    test_print(u"バージョン", u"バージョン")
-#    test_print(u"シリアルＡＴＡ", u"シリアルエーティーエー")
-#    test_print(u"自動金銭出入機", u"じどうきんせんしゅつにゅうき")
-    test_print(u"全国津々浦々", u"ぜんこくつつうらうら")
-#    test_print(u"作り茸", u"ツクリタケ")     
-#    test_print(u"別荘", u"ベッソウ")
-#    test_print(u"守り人", u"モリビト")
-#    test_print(u"建て替える", u"タテカエル")
-#    test_print(u"一つ", u"ヒトツ")
+#    print_verbose(u'漢字', u'かんじ')
+#    print_verbose(u"小牛", u"こうし")
+#    print_verbose(u"バス停", u"バスてい")
+#    print_verbose(u"非常事態", u"ひじょうじたい")
+#    print_verbose(u"建て替える", u"たてかえる")
+#    print_verbose(u"小さい", u"ちいさい")
+#    print_verbose(u"鉄道公安官", u"てつどうこうあんかん")
+#    print_verbose(u"手紙", u"てがみ")
+#    print_verbose(u"筆箱", u"ふでばこ")
+#    print_verbose(u"人人", u"ひとびと")
+#    print_verbose(u"岸壁", u"がんぺき")
+#    print_verbose(u"一つ", u"ひとつ")
+#    print_verbose(u"別荘", u"べっそう")
+#    print_verbose(u"出席", u"しゅっせき")
+#    print_verbose(u"結婚", u"けっこん")
+#    print_verbose(u"分別", u"ふんべつ")   
+#    print_verbose(u"刈り入れ人", u"かりいれびと")
+#    print_verbose(u"日帰り", u"ひがえり")        
+#    print_verbose(u"アリドリ科", u"ありどりか")
+#    print_verbose(u"赤鷽", u"アカウソ")
+#    print_verbose(u"重立った", u"おもだった")
+#    print_verbose(u"刈り手", u"かりて")
+#    print_verbose(u"働き蟻", u"はたらきあり")
+#    print_verbose(u"往き交い", u"いきかい")    
+#    print_verbose(u"積み卸し", u"つみおろし")
+#    print_verbose(u"包み紙", u"つつみがみ")
+#    print_verbose(u"守り人", u"もりびと")
+#    print_verbose(u"糶り", u"せり")       
+#    print_verbose(u"バージョン", u"バージョン")
+#    print_verbose(u"シリアルＡＴＡ", u"シリアルエーティーエー")
+#    print_verbose(u"自動金銭出入機", u"じどうきんせんしゅつにゅうき")
+    print_verbose(u"全国津々浦々", u"ぜんこくつつうらうら")
+#    print_verbose(u"作り茸", u"ツクリタケ")     
+#    print_verbose(u"別荘", u"ベッソウ")
+#    print_verbose(u"守り人", u"モリビト")
+#    print_verbose(u"建て替える", u"タテカエル")
+#    print_verbose(u"一つ", u"ヒトツ")
 #    
-#    test_print(u'先程',u'サキホド')
-#    test_print(u'先程',u'さきほど')
+#    print_verbose(u'先程',u'サキホド')
+#    print_verbose(u'先程',u'さきほど')
 #    
-#    test_print(u'先週',u'センシュウ')
-#    test_print(u'先週',u'せんしゅう')
+#    print_verbose(u'先週',u'センシュウ')
+#    print_verbose(u'先週',u'せんしゅう')
 #
-#    test_print(u'姉さん',u'ネエサン')
-#    test_print(u'姉さん',u'ねえさん')
+    print_verbose(u'姉さん',u'ネエサン')
+    print_verbose(u'姉さん',u'ねえさん')
 #
-#    test_print(u'近寄る',u'チカヨル')
-#    test_print(u'近寄る',u'ちかよる')
+#    print_verbose(u'近寄る',u'チカヨル')
+#    print_verbose(u'近寄る',u'ちかよる')
 #
-#    test_print(u'弱気',u'ヨワキ')
-#    test_print(u'弱気',u'よわき')
+#    print_verbose(u'弱気',u'ヨワキ')
+#    print_verbose(u'弱気',u'よわき')
 ##    
-#    test_print(u'あの',u'アノ')
-#    test_print(u'アノ',u'あの')
+#    print_verbose(u'あの',u'アノ')
+#    print_verbose(u'アノ',u'あの')
+    print_verbose(u'明かん',u'あかん')
+
     
 #    
-#    test_print(u'馬を水辺に導く事は出来るが馬に水を飲ませる事は出来ない',
+#    print_verbose(u'馬を水辺に導く事は出来るが馬に水を飲ませる事は出来ない',
 #               u'うまをみずべにみちびくことはできるがうまにみずをのませることはできない')
