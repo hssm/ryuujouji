@@ -2,21 +2,18 @@
 #Copyright (C) 2011 Houssam Salem <ntsp.gm@gmail.com>
 #License: GPLv3; http://www.gnu.org/licenses/gpl.txt
 
-
-from sqlalchemy.sql import select, bindparam
-
+import sqlite3
 from tools import is_u, u_to_i, is_kana, is_kata, kata_to_hira, has_dakuten,\
                   get_dakuten, has_handakuten, get_handakuten, is_hira,\
                   hira_to_kata
-import reading_db
+
 from segments import SegmentTag, Segment
+from paths import READINGS_PATH
 
-conn = reading_db.get_connection()
-reading_t = reading_db.reading_t
+conn = sqlite3.connect(READINGS_PATH)
+conn.row_factory = sqlite3.Row
+c = conn.cursor()
 
-r_select = select([reading_t.c.id, reading_t.c.reading, reading_t.c.okurigana]).\
-                  where(reading_t.c.character==bindparam('character'))
- 
 class Tree:
     parent = None
     segment = None
@@ -135,16 +132,17 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
     else:
         q_char = w_char
 
-    char_readings = conn.execute(r_select, character=q_char).fetchall() 
+    s = "select id, reading, okurigana from reading where character=?"
+    char_readings = c.execute(s, q_char).fetchall()
     
     #TODO: Handle non-kanji and non-kana characters
     if char_readings == None:
         print "Shouldn't be here for now."
         return None
-            
+    
     for cr in char_readings:
-        r = cr.reading
-        o = cr.okurigana
+        r = cr['reading']
+        o = cr['okurigana']
         rl = len(r)  #reading length (non-okurigana portion)
         ol = len(o)  #okurigana length
             
@@ -153,19 +151,19 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
     
         word = g_word[w_index:]
 
-        variants.append((cr.reading[:rl], SegmentTag.Regular))
+        variants.append((cr['reading'][:rl], SegmentTag.Regular))
 
         first_k = r[0]
         last_k = r[-1]
 
         if has_dakuten(first_k):
             d = get_dakuten(first_k)
-            daku_r = d + cr.reading[1:rl]
+            daku_r = d + cr['reading'][1:rl]
             variants.append((daku_r, SegmentTag.Dakuten))
                                
         if has_handakuten(first_k):
             d = get_handakuten(first_k)
-            handaku_r = d + cr.reading[1:rl]
+            handaku_r = d + cr['reading'][1:rl]
             variants.append((handaku_r, SegmentTag.Handakuten))
         
         if last_k == u'つ' or last_k == u'ツ':
@@ -226,7 +224,7 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                                 ov = hira_to_kata(ov)
                             #ALSO check for matches in the reading
                             if ov == known_oku_r:
-                                seg = Segment(tag, w_char, cr.reading, cr.id,
+                                seg = Segment(tag, w_char, cr['reading'], cr['id'],
                                               reading[:rl+ol])
                                 seg.append_oku(ov, o) 
                                 seg.tags.append(otag)
@@ -239,7 +237,7 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                     #Branch for standard reading with no transformations.
                     if known_r.startswith(r):
                         #This branch for regular words and readings.
-                        seg = Segment(tag, w_char, cr.reading, cr.id, reading[:rl+ol])
+                        seg = Segment(tag, w_char, cr['reading'], cr['id'], reading[:rl+ol])
                         n_branch = Tree(b, seg)
                         branches_at[w_index+1].append(n_branch)
                         new_branches += 1
@@ -254,7 +252,7 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                                 
                             if (is_kana(w_trail) and w_trail == r_trail):
                                 seg = Segment(SegmentTag.KanaTrail, w_char,
-                                              cr.reading, cr.id, reading[:rl+ol])
+                                              cr['reading'], cr['id'], reading[:rl+ol])
                                 n_branch = Tree(b, seg)
                                 branches_at[w_index+2].append(n_branch)
                                 new_branches += 1
@@ -291,61 +289,61 @@ def print_segments(k, r):
             print "%s %s" % (s.character, s.reading)
 
 if __name__ == "__main__":
-#    print_verbose(u'漢字', u'かんじ')
-#    print_verbose(u"小牛", u"こうし")
-#    print_verbose(u"バス停", u"バスてい")
-#    print_verbose(u"非常事態", u"ひじょうじたい")
-#    print_verbose(u"建て替える", u"たてかえる")
-#    print_verbose(u"小さい", u"ちいさい")
-#    print_verbose(u"鉄道公安官", u"てつどうこうあんかん")
-#    print_verbose(u"手紙", u"てがみ")
-#    print_verbose(u"筆箱", u"ふでばこ")
-#    print_verbose(u"人人", u"ひとびと")
-#    print_verbose(u"岸壁", u"がんぺき")
-#    print_verbose(u"一つ", u"ひとつ")
-#    print_verbose(u"別荘", u"べっそう")
-#    print_verbose(u"出席", u"しゅっせき")
-#    print_verbose(u"結婚", u"けっこん")
-#    print_verbose(u"分別", u"ふんべつ")   
-#    print_verbose(u"刈り入れ人", u"かりいれびと")
-#    print_verbose(u"日帰り", u"ひがえり")        
-#    print_verbose(u"アリドリ科", u"ありどりか")
-#    print_verbose(u"赤鷽", u"アカウソ")
-#    print_verbose(u"重立った", u"おもだった")
-#    print_verbose(u"刈り手", u"かりて")
-#    print_verbose(u"働き蟻", u"はたらきあり")
-#    print_verbose(u"往き交い", u"いきかい")    
-#    print_verbose(u"積み卸し", u"つみおろし")
-#    print_verbose(u"包み紙", u"つつみがみ")
-#    print_verbose(u"守り人", u"もりびと")
-#    print_verbose(u"糶り", u"せり")       
-#    print_verbose(u"バージョン", u"バージョン")
-#    print_verbose(u"シリアルＡＴＡ", u"シリアルエーティーエー")
-#    print_verbose(u"自動金銭出入機", u"じどうきんせんしゅつにゅうき")
+    print_verbose(u'漢字', u'かんじ')
+    print_verbose(u"小牛", u"こうし")
+    print_verbose(u"バス停", u"バスてい")
+    print_verbose(u"非常事態", u"ひじょうじたい")
+    print_verbose(u"建て替える", u"たてかえる")
+    print_verbose(u"小さい", u"ちいさい")
+    print_verbose(u"鉄道公安官", u"てつどうこうあんかん")
+    print_verbose(u"手紙", u"てがみ")
+    print_verbose(u"筆箱", u"ふでばこ")
+    print_verbose(u"人人", u"ひとびと")
+    print_verbose(u"岸壁", u"がんぺき")
+    print_verbose(u"一つ", u"ひとつ")
+    print_verbose(u"別荘", u"べっそう")
+    print_verbose(u"出席", u"しゅっせき")
+    print_verbose(u"結婚", u"けっこん")
+    print_verbose(u"分別", u"ふんべつ")   
+    print_verbose(u"刈り入れ人", u"かりいれびと")
+    print_verbose(u"日帰り", u"ひがえり")        
+    print_verbose(u"アリドリ科", u"ありどりか")
+    print_verbose(u"赤鷽", u"アカウソ")
+    print_verbose(u"重立った", u"おもだった")
+    print_verbose(u"刈り手", u"かりて")
+    print_verbose(u"働き蟻", u"はたらきあり")
+    print_verbose(u"往き交い", u"いきかい")    
+    print_verbose(u"積み卸し", u"つみおろし")
+    print_verbose(u"包み紙", u"つつみがみ")
+    print_verbose(u"守り人", u"もりびと")
+    print_verbose(u"糶り", u"せり")       
+    print_verbose(u"バージョン", u"バージョン")
+    print_verbose(u"シリアルＡＴＡ", u"シリアルエーティーエー")
+    print_verbose(u"自動金銭出入機", u"じどうきんせんしゅつにゅうき")
     print_verbose(u"全国津々浦々", u"ぜんこくつつうらうら")
-#    print_verbose(u"作り茸", u"ツクリタケ")     
-#    print_verbose(u"別荘", u"ベッソウ")
-#    print_verbose(u"守り人", u"モリビト")
-#    print_verbose(u"建て替える", u"タテカエル")
-#    print_verbose(u"一つ", u"ヒトツ")
-#    
-#    print_verbose(u'先程',u'サキホド')
-#    print_verbose(u'先程',u'さきほど')
-#    
-#    print_verbose(u'先週',u'センシュウ')
-#    print_verbose(u'先週',u'せんしゅう')
-#
+    print_verbose(u"作り茸", u"ツクリタケ")     
+    print_verbose(u"別荘", u"ベッソウ")
+    print_verbose(u"守り人", u"モリビト")
+    print_verbose(u"建て替える", u"タテカエル")
+    print_verbose(u"一つ", u"ヒトツ")
+    
+    print_verbose(u'先程',u'サキホド')
+    print_verbose(u'先程',u'さきほど')
+    
+    print_verbose(u'先週',u'センシュウ')
+    print_verbose(u'先週',u'せんしゅう')
+
     print_verbose(u'姉さん',u'ネエサン')
     print_verbose(u'姉さん',u'ねえさん')
-#
-#    print_verbose(u'近寄る',u'チカヨル')
-#    print_verbose(u'近寄る',u'ちかよる')
-#
-#    print_verbose(u'弱気',u'ヨワキ')
-#    print_verbose(u'弱気',u'よわき')
-##    
-#    print_verbose(u'あの',u'アノ')
-#    print_verbose(u'アノ',u'あの')
+
+    print_verbose(u'近寄る',u'チカヨル')
+    print_verbose(u'近寄る',u'ちかよる')
+
+    print_verbose(u'弱気',u'ヨワキ')
+    print_verbose(u'弱気',u'よわき')
+#    
+    print_verbose(u'あの',u'アノ')
+    print_verbose(u'アノ',u'あの')
     print_verbose(u'明かん',u'あかん')
 
     

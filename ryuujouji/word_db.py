@@ -1,7 +1,5 @@
+import sqlite3
 import os
-from segments import SegmentTag
-from sqlalchemy import (create_engine, Table, Column, Unicode, Boolean, 
-                        UniqueConstraint, Enum, Integer, ForeignKey, MetaData)
 
 class InvalidDatabaseException(Exception): pass
 
@@ -11,46 +9,53 @@ class SolveTag:
     Unsolvable = 'Unsolvable'
     Unchecked = 'Unchecked'
     
-
-meta = MetaData()
-
-word_t = Table('word', meta,
-               Column('id', Integer, primary_key=True),
-               Column('word', Unicode, index=True),
-               Column('reading', Unicode, index=True),
-               Column('solved', Enum(SolveTag.Solved, SolveTag.Unsolvable,
-                                    SolveTag.Unchecked),
-                      default=SolveTag.Unchecked),
-               UniqueConstraint('word', 'reading'))
-
-segment_t = Table('segment', meta,
-                   Column('id', Integer, primary_key=True, autoincrement=False),
-                   Column('word_id', Integer, ForeignKey('word.id')),
-                   Column('reading_id', Integer),
-                   Column('is_kanji', Boolean, nullable=False),
-                   Column('index', Integer),
-                   Column('indexr', Integer))
-
-tag_t = Table('tag', meta,
-               Column('id', Integer, primary_key=True),
-               Column('segment_id', Integer, ForeignKey('segment.id')),
-               Column('tag', Enum(SegmentTag.Regular, SegmentTag.Dakuten,
-                                  SegmentTag.Handakuten, SegmentTag.Sokuon,
-                                  SegmentTag.KanaTrail, SegmentTag.OkuRegular,
-                                  SegmentTag.OkuSokuon, SegmentTag.OkuInflected)))
-
-
 def create_db(db_path):
     """Creates a new word database and returns a WordsDB object for it. If
     db_path already exists, it is overwritten with a new database."""
     
     if os.path.exists(db_path):
         os.remove(db_path)
+        print 'Removed existing database at %s' % db_path
 
-    engine = create_engine('sqlite:///' + db_path)
-    meta.create_all(engine)
+     
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
     
-    return engine.connect()
+    table = '''
+        CREATE TABLE word(
+            id       INTEGER PRIMARY KEY,
+            word     TEXT,
+            reading  TEXT,
+            solved   TEXT DEFAULT %s,
+            UNIQUE(word, reading) ON CONFLICT IGNORE
+        )
+        ''' % SolveTag.Unchecked    
+    c.execute(table)
+    c.execute('CREATE INDEX word_idx ON word(word)')
+    c.execute('CREATE INDEX reading_idx ON word(reading)')
+
+    table = '''
+        CREATE TABLE segment(
+            id          INTEGER PRIMARY KEY,
+            word_id     INTEGER,
+            reading_id  TEXT,
+            is_kanji    BOOLEAN,
+            'index'     INTEGER,
+            indexr      INTEGER,
+            FOREIGN KEY (word_id) REFERENCES word(id)
+        )
+        '''
+    c.execute(table)
+    
+    table = '''
+        CREATE TABLE tag(
+            id             INTEGER PRIMARY KEY,
+            segment_id     INTEGER,
+            tag            TEXT,
+            FOREIGN KEY (segment_id) REFERENCES segment(id)
+        )
+        '''
+    c.execute(table)
 
 
 def get_connection(db_path):
@@ -58,5 +63,6 @@ def get_connection(db_path):
     
     if not os.path.exists(db_path):
         raise InvalidDatabaseException("No such database: %s" % db_path)
-    engine = create_engine('sqlite:///' + db_path)
-    return engine.connect()
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    return conn

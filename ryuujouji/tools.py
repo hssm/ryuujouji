@@ -2,8 +2,6 @@
 #Copyright (C) 2011 Houssam Salem <ntsp.gm@gmail.com>
 #License: GPLv3; http://www.gnu.org/licenses/gpl.txt
 
-import sys
-
 #Hiragana range is U+3041 to U+309F
 #Katakana range is U+30A0 to U+30FF
 
