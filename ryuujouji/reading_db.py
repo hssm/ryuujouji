@@ -16,7 +16,8 @@ CREATE TABLE reading(
     id        INTEGER PRIMARY KEY,
     character TEXT,
     reading   TEXT,
-    type      TEXT
+    type      TEXT,
+    UNIQUE(character, reading) ON CONFLICT REPLACE
 )
 '''
 

@@ -132,6 +132,7 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
     else:
         q_char = w_char
 
+
     s = "select id, reading from reading where character=?"
     char_readings = c.execute(s, q_char).fetchall()
     
@@ -175,6 +176,7 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                 variants.append((soku_r, SegmentTag.Sokuon))
 
         if o is not u'':
+
             #The readings from kanjidic always have hiragana okurigana
             oku_variants.append((o, SegmentTag.OkuRegular))
             
@@ -348,8 +350,10 @@ if __name__ == "__main__":
     print_verbose(u'あの',u'アノ')
     print_verbose(u'アノ',u'あの')
     print_verbose(u'明かん',u'あかん')
-
     
+#    print_verbose(u'プログラム制御式及びキーボード制御式のアドレス指定可能な記憶域をもつ計算器',
+#                  u'プログラムせいぎょしきおよびキーボードせいぎょしきのアドレスしていかのうなきおくいきをもつけいさんき')
+   
 #    
 #    print_verbose(u'馬を水辺に導く事は出来るが馬に水を飲ませる事は出来ない',
 #               u'うまをみずべにみちびくことはできるがうまにみずをのませることはできない')
