@@ -16,9 +16,8 @@ CREATE TABLE reading(
     id        INTEGER PRIMARY KEY,
     character TEXT,
     reading   TEXT,
-    okurigana TEXT,
-    type      TEXT,
-    UNIQUE(character, reading, okurigana) ON CONFLICT REPLACE)
+    type      TEXT
+)
 '''
 
 def init():
@@ -60,28 +59,36 @@ def db_populate_kanji_readings():
     s = "SELECT * FROM reading WHERE r_type='ja_on' OR r_type='ja_kun'"
     readings = kd_c.execute(s).fetchall()
 
+    bases_used = []
+    lastchar = None
     for r in readings:
+        char = r['character_literal']
+        if char != lastchar:
+            bases_used = []
+            
         reading = r['reading']
         if reading[-1] == u"-":
             reading = reading[:-1]
         elif reading[0] == u"-":
             reading = reading[1:]
+            
+        (base,s,oku) = reading.partition('.')
         
-        (re, s, o) = reading.partition(".")
+        if base not in bases_used:
+            bases_used.append(base)
+            reading_l.append([char, base, r['r_type']])
+        reading_l.append([char, reading, r['r_type']])
         
-        #insert the reading twice, once with the okurigana portion
-        #and once without. If it already had no okurigana it is simply replaced
-        reading_l.append([r['character_literal'], re, o, r['r_type']])
-        reading_l.append([r['character_literal'], re, u'', r['r_type']])
+        lastchar = char
 
     f = codecs.open(OTHER_READINGS_PATH, encoding='utf-8')
     for line in f:
         line = line.strip('\n')
         (k, s, r) = line.partition(",")
-        reading_l.append([k, r, u'', 'other'])
+        reading_l.append([k, r, 'other'])
         
-    c.executemany('''INSERT INTO reading(character, reading, okurigana, type)
-                     VALUES (?,?,?,?)''', reading_l)
+    c.executemany('''INSERT INTO reading(character, reading, type)
+                     VALUES (?,?,?)''', reading_l)
 
     print 'Filling database with kanji/reading data took '\
             '%s seconds' % (time.time() - start)

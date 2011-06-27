@@ -39,9 +39,13 @@ def create_db(db_path):
             id          INTEGER PRIMARY KEY,
             word_id     INTEGER,
             reading_id  TEXT,
-            is_kanji    BOOLEAN,
+            character   TEXT,
             'index'     INTEGER,
             indexr      INTEGER,
+            dic_reading TEXT,
+            reading     TEXT,
+            oku_reading TEXT,
+            is_kanji    BOOLEAN,
             FOREIGN KEY (word_id) REFERENCES word(id)
         )
         '''

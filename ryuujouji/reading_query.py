@@ -12,7 +12,6 @@ def get_id(char, reading):
         return None
 
     conn.row_factory = sqlite3.Row
-    c = conn.cursor()
     #Get both the hiragana and katakana form of reading
     if tools.is_kata(reading[0]):
         k_reading = reading
@@ -22,8 +21,13 @@ def get_id(char, reading):
         k_reading = tools.hira_to_kata(reading)
            
     s = 'SELECT * FROM reading WHERE character=? and (reading=? or reading=?)'
-    result = c.execute(s, [char, h_reading, k_reading]).fetchall()
+    result = conn.execute(s, [char, h_reading, k_reading]).fetchall()
     if len(result) <= 0:
         return None
     else:
         return result[0]['id']
+    
+def row_by_id(id):
+    
+    s = 'select * from reading where id=?'
+    return conn.execute(s, [id]).fetchall()

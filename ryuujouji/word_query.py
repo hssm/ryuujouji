@@ -6,7 +6,7 @@ from solver import solve_reading
 from segments import SegmentTag
 import word_db
 import reading_query
-
+import word
 from word_db import SolveTag
 
 word_t = None
@@ -18,6 +18,9 @@ class WordQuery():
     
     def __init__(self, words_db_path):
         self.w_conn = word_db.get_connection(words_db_path)
+        
+    def Word(self, expr, reading):
+        return word.Word(self.w_conn, expr, reading)
         
     def add_words(self, word_list, solve=True):
         """Adds the given words and their readings to the database. The word_list
@@ -38,9 +41,9 @@ class WordQuery():
         """Returns the database row (as a tuple) for word with reading. If the
         word/reading combination doesn't exist, returns None."""
         
-        s = 'select * from word where word=? and reading=?'
-        word = self.w_conn.execute(s, [word, reading]).fetchone()
-        return word
+        
+        s = "select * from word where word=? and reading=?"
+        return self.w_conn.execute(s, [word, reading]).fetchone()
         
 
     def words_by_reading(self, char, reading, **kwargs):
@@ -89,10 +92,7 @@ class WordQuery():
             return None
         return self.segments_by_word_id(word.id)
          
-    def segments_by_word_id(self, word_id):
-        s = 'select * from segment where segment.word_id=?'
-        segments = self.w_conn.execute(s, [word_id]).fetchall()
-        return segments
+
     
 
     def tags_by_segment_id(self, seg_id):
@@ -105,8 +105,9 @@ class WordQuery():
        
     def save_solved(self, solved_l, segment_l, tag_l):      
         wor_upd = 'update word set solved=? where id=?'
-        seg_upd = '''insert into segment(id, word_id, reading_id, is_kanji,
-         'index', indexr) values(?,?,?,?,?,?)'''
+        seg_upd =\
+'''insert into segment(id, word_id, reading_id, character, 'index',
+indexr, dic_reading, reading, oku_reading, is_kanji) values(?,?,?,?,?,?,?,?,?,?)'''
         tag_upd = 'insert into tag(segment_id, tag) values(?,?)'
     
         #Length checks are there because, for some reason, it seems to add
@@ -147,7 +148,9 @@ class WordQuery():
                     seg_id += 1
                     solved_l.append([SolveTag.Solved, word['id']])
                     segment_l.append([seg_id, word['id'], seg.reading_id,
-                                      seg.is_kanji, seg.index, seg.indexr])
+                                      seg.character, seg.index, seg.indexr,
+                                      seg.dic_reading, seg.reading,
+                                      seg.oku_reading, seg.is_kanji])
                     for tag in seg.tags:
                         tag_l.append([seg_id, tag])
             save_now += 1

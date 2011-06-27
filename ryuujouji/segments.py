@@ -12,7 +12,7 @@ class SegmentTag:
 class Segment:
     """Class to hold segment information."""
     #A list of SegmentTags denoting the types of transformations of the reading.
-    tags = None
+    tags = []
     #The character we are solving
     character = None
     #The nth kanji in the word
@@ -42,7 +42,3 @@ class Segment:
         self.dic_reading = dic_reading
         self.reading_id = reading_id
         self.reading = reading
-        
-    def append_oku(self, oku, orig):
-        self.oku_reading = oku
-        self.dic_reading += u'.%s' % orig

@@ -132,7 +132,7 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
     else:
         q_char = w_char
 
-    s = "select id, reading, okurigana from reading where character=?"
+    s = "select id, reading from reading where character=?"
     char_readings = c.execute(s, q_char).fetchall()
     
     #TODO: Handle non-kanji and non-kana characters
@@ -141,11 +141,14 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
         return None
     
     for cr in char_readings:
-        r = cr['reading']
-        o = cr['okurigana']
+        (dic_r,s,dic_o) = cr['reading'].partition('.')
+
+        r = dic_r #mutable
+        o = dic_o #mutable
+
         rl = len(r)  #reading length (non-okurigana portion)
         ol = len(o)  #okurigana length
-            
+        
         variants = []
         oku_variants = []
     
@@ -186,7 +189,6 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
 
         #The portion of the known word we want to test as okurigana
         known_oku = word[1:ol+1]
-        
         for b in branches:
             r_index = b.next_reading
             if r_index >= len(g_reading):
@@ -210,7 +212,7 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                     r = kata_to_hira(r)
                      
                 #Okurigana branch (if it has any)
-                if o is not u'':                       
+                if o is not u'':
                     #Try all okurigana variants
                     for (ov, otag) in oku_variants:
                         #Check for matches in the word
@@ -226,7 +228,7 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                             if ov == known_oku_r:
                                 seg = Segment(tag, w_char, cr['reading'], cr['id'],
                                               reading[:rl+ol])
-                                seg.append_oku(ov, o) 
+                                seg.oku_reading = ov 
                                 seg.tags.append(otag)
                                 n_branch = Tree(b, seg)
                                 branches_at[w_index+1+ol].append(n_branch)
@@ -234,10 +236,11 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
     
                 #No Okurigana branch
                 else:
+
                     #Branch for standard reading with no transformations.
                     if known_r.startswith(r):
                         #This branch for regular words and readings.
-                        seg = Segment(tag, w_char, cr['reading'], cr['id'], reading[:rl+ol])
+                        seg = Segment(tag, w_char, dic_r, cr['id'], reading[:rl])
                         n_branch = Tree(b, seg)
                         branches_at[w_index+1].append(n_branch)
                         new_branches += 1
@@ -252,7 +255,7 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                                 
                             if (is_kana(w_trail) and w_trail == r_trail):
                                 seg = Segment(SegmentTag.KanaTrail, w_char,
-                                              cr['reading'], cr['id'], reading[:rl+ol])
+                                              dic_r, cr['id'], reading[:rl])
                                 n_branch = Tree(b, seg)
                                 branches_at[w_index+2].append(n_branch)
                                 new_branches += 1
