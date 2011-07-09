@@ -32,13 +32,19 @@ class Segment:
     
     def __init__(self, tags, character, dic_reading, reading_id, reading):
         if tags is not None:
-            self.tags = [tags]
-            self.is_kanji = True
+            tags = [tags]
+            is_kanji = True
         else:
-            self.tags = []
-            self.is_kanji = False
-            
+            tags = []
+            is_kanji = False
+        
+        self.tags = tags
         self.character = character
         self.dic_reading = dic_reading
         self.reading_id = reading_id
         self.reading = reading
+        self.is_kanji = is_kanji
+
+
+    def __str__(self):
+        return 'Segment[%s, %s]' % (self.character, self.reading)

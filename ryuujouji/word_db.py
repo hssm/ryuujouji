@@ -3,11 +3,6 @@ import os
 
 class InvalidDatabaseException(Exception): pass
 
-class SolveTag:
-    """String enums for the status of a word's solution."""
-    Solved = 'Solved'
-    Unsolvable = 'Unsolvable'
-    Unchecked = 'Unchecked'
     
 def create_db(db_path):
     """Creates a new word database and returns a WordsDB object for it. If
@@ -20,16 +15,17 @@ def create_db(db_path):
      
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
+    c.execute('PRAGMA foreign_keys = ON')
     
     table = '''
         CREATE TABLE word(
             id       INTEGER PRIMARY KEY,
             word     TEXT,
             reading  TEXT,
-            solved   TEXT DEFAULT %s,
-            UNIQUE(word, reading) ON CONFLICT IGNORE
+            solved   BOOLEAN DEFAULT FALSE,
+            UNIQUE(word, reading)
         )
-        ''' % SolveTag.Unchecked    
+        '''
     c.execute(table)
     c.execute('CREATE INDEX word_idx ON word(word)')
     c.execute('CREATE INDEX reading_idx ON word(reading)')
@@ -42,11 +38,7 @@ def create_db(db_path):
             character   TEXT,
             'index'     INTEGER,
             indexr      INTEGER,
-            dic_reading TEXT,
-            reading     TEXT,
-            oku_reading TEXT,
-            is_kanji    BOOLEAN,
-            FOREIGN KEY (word_id) REFERENCES word(id)
+            FOREIGN KEY (word_id) REFERENCES word(id) ON DELETE CASCADE
         )
         '''
     c.execute(table)
@@ -56,7 +48,7 @@ def create_db(db_path):
             id             INTEGER PRIMARY KEY,
             segment_id     INTEGER,
             tag            TEXT,
-            FOREIGN KEY (segment_id) REFERENCES segment(id)
+            FOREIGN KEY (segment_id) REFERENCES segment(id) ON DELETE CASCADE
         )
         '''
     c.execute(table)
@@ -69,4 +61,5 @@ def get_connection(db_path):
         raise InvalidDatabaseException("No such database: %s" % db_path)
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
+    conn.execute('PRAGMA foreign_keys = ON')
     return conn

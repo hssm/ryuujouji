@@ -5,11 +5,16 @@
 import sqlite3
 import time
 import os
-from word_query import WordQuery
-from word_db import SolveTag
-from solver import solve_reading
+
+from word import Word
 JMDICT_PATH = os.path.join('dbs/jmdict.sqlite')
-wq = None 
+
+conn = None
+
+def make_connection(db_path):
+    global conn    
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
 
 def populate_db():
     print "Filling database with word/reading data from JMdict..."
@@ -18,12 +23,11 @@ def populate_db():
         print "No jmdict database found at %s" % JMDICT_PATH
         print "Cannot continue without it."
         return
-    
-    conn = sqlite3.connect(JMDICT_PATH)
-    conn.row_factory = sqlite3.Row
-    c = conn.cursor()
+        
+    #get connection to jmdict database 
+    jm_conn = sqlite3.connect(JMDICT_PATH)
+    jm_conn.row_factory = sqlite3.Row
 
-    word_l = []
     start = time.time()
 
     s = '''
@@ -38,8 +42,8 @@ def populate_db():
         ON k_ele.entry_ent_seq=r_ele.entry_ent_seq
         '''
 
-    results = c.execute(s)
-
+    results = jm_conn.execute(s)
+    
     for r in results:
         #some words have no kanji elements
         if r['k_ele_keb'] is None:
@@ -48,61 +52,69 @@ def populate_db():
         #corresponding keb
         if r['re_restr_keb'] is not None:
             if r['re_restr_keb'] == r['k_ele_keb']:
-                word_l.append([r['k_ele_keb'], r['r_ele_reb']])
+                word = Word(conn, r['k_ele_keb'], r['r_ele_reb'])
+                word.save()
         else: #otherwise, all rebs apply to all kebs in this entry
             #but some readings don't use kanji, so no related kebs
             if r['r_ele_re_nokanji'] is not None:
-                word_l.append([r['k_ele_keb'], r['r_ele_reb']])
-
-    wq.add_words(word_l, solve=False)
+                word = Word(conn, r['k_ele_keb'], r['r_ele_reb'])
+                word.save()
+    conn.commit()
     print 'Filling database with word/reading data took '\
             '%s seconds' % (time.time() - start)
-
-
-def fill_solutions():
-    print 'Solving segments...(takes about 70 seconds)'
-    wq.clear_segments()
-    start = time.time()
-    wq.solve_new(unsolved=True)
-    print 'took %s seconds' % (time.time() - start)
 
 
 def dry_run():
     """Don't save any changes to the database, but check if the present
      parsing behaviour breaks the solving of an already-solved entry.
      """
-     
+
     start = time.time()
-    words = wq.contains_char(u'%')
+    results = conn.execute('select word, reading, solved from word').fetchall()
 
     newly_solved = 0
-    for word in words:
-        segments = solve_reading(word.word, word.reading)
-        if word.solved == SolveTag.Solved:
-            if len(segments) == 0:
-                print "Regression for word %s == %s" %(word.word, word.reading)
+    regressed = 0
+    for row in results:
+        word = Word(conn, row['word'], row['reading'])
+
+        if row['solved'] is 1:
+            if word.segments is None:
+                regressed += 1
+                print "Regression for word %s == %s" % (row['word'], row['reading'])
         else:
-            if len(segments) > 0:
+            if word.segments is not None:
                 newly_solved += 1
-                #print "New found word ", word.word, word.reading
-    print "The changes will solve another %s entries. " % newly_solved
+                print "New word found %s == %s" % (row['word'], row['reading'])
+    print "The changes will solve %s entries. " % newly_solved
+    print "The changes will unsolve %s entries. " % regressed
     print 'took %s seconds' % (time.time() - start)
 
 
-def print_stats():
-    wq.print_solving_stats()
+def print_solving_stats():
+    words = conn.execute('select count() from word').fetchone()
+    n = words[0]
+    
+    s = "select count() from word where solved=1" 
+    found = conn.execute(s).fetchone()
+    nf = found[0]
+    if n != 0:
+        percent = float(nf) / float(n) * 100
+    else:
+        percent = 0
+    print "There are %s entries in the database. A solution has been found"\
+    " for %s of them. (%d%%)" % (n, nf, percent)   
 
 
 if __name__ == "__main__":
     dbpath = 'dbs/jmdict_solutions.sqlite'
+    
     from word_db import create_db
     create_db(dbpath)
-    wq = WordQuery(dbpath)
-    
+
+    make_connection(dbpath)
     populate_db()
-   
-    fill_solutions() 
-    print_stats()     
+     
+    print_solving_stats()     
 #    dry_run()
 
 #There are 159207 entries in the database. A solution has been found for 139520 of them. (87%)

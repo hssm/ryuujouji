@@ -7,7 +7,7 @@ from tools import is_u, u_to_i, is_kana, is_kata, kata_to_hira, has_dakuten,\
                   get_dakuten, has_handakuten, get_handakuten, is_hira,\
                   hira_to_kata
 
-from segments import SegmentTag, make_segment
+from segments import SegmentTag, Segment
 from paths import READINGS_PATH
 
 conn = sqlite3.connect(READINGS_PATH)
@@ -87,10 +87,10 @@ def solve_reading(word, reading):
         usable_branches -= len(branches_here)
 
         if is_kana(w_char):
-            usable_branches += solve_kana(w_char, w_index, reading,
+            usable_branches += __solve_kana(w_char, w_index, reading,
                                          branches_here, branches_at)
         else:        
-            usable_branches += solve_character(word, w_index, reading,
+            usable_branches += __solve_character(word, w_index, reading,
                                               branches_here, branches_at)
     for l in branches_at[-1]:
         if l.next_reading == len(reading):
@@ -102,7 +102,7 @@ def solve_reading(word, reading):
         return None
 
 
-def solve_kana(w_char, w_index, reading, branches, branches_at):
+def __solve_kana(w_char, w_index, reading, branches, branches_at):
     n_new = 0
     for branch in branches:
         r_index = branch.next_reading
@@ -115,14 +115,14 @@ def solve_kana(w_char, w_index, reading, branches, branches_at):
             r_char = kata_to_hira(r_char) 
     
         if w_char == r_char:
-            s = make_segment(None, w_char, w_char, 0, reading[r_index])
+            s = Segment(None, w_char, w_char, 0, reading[r_index])
             n_branch = Tree(branch, s)
             branches_at[w_index+1].append(n_branch)
             n_new += 1
     return n_new
 
 
-def solve_character(g_word, w_index, g_reading, branches, branches_at):
+def __solve_character(g_word, w_index, g_reading, branches, branches_at):
     new_branches = 0
     w_char = g_word[w_index]
 
@@ -131,7 +131,6 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
         q_char = g_word[w_index-1]
     else:
         q_char = w_char
-
 
     s = "select id, reading from reading where character=?"
     char_readings = c.execute(s, q_char).fetchall()
@@ -176,7 +175,6 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                 variants.append((soku_r, SegmentTag.Sokuon))
 
         if o is not u'':
-
             #The readings from kanjidic always have hiragana okurigana
             oku_variants.append((o, SegmentTag.OkuRegular))
             
@@ -228,7 +226,7 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                                 ov = hira_to_kata(ov)
                             #ALSO check for matches in the reading
                             if ov == known_oku_r:
-                                seg = make_segment(tag, w_char, cr['reading'], cr['id'],
+                                seg = Segment(tag, w_char, cr['reading'], cr['id'],
                                               reading[:rl+ol])
                                 seg.oku_reading = ov 
                                 seg.tags.append(otag)
@@ -242,7 +240,7 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                     #Branch for standard reading with no transformations.
                     if known_r.startswith(r):
                         #This branch for regular words and readings.
-                        seg = make_segment(tag, w_char, dic_r, cr['id'], reading[:rl])
+                        seg = Segment(tag, w_char, dic_r, cr['id'], reading[:rl])
                         n_branch = Tree(b, seg)
                         branches_at[w_index+1].append(n_branch)
                         new_branches += 1
@@ -256,14 +254,12 @@ def solve_character(g_word, w_index, g_reading, branches, branches_at):
                                 w_trail = hira_to_kata(w_trail)
                                 
                             if (is_kana(w_trail) and w_trail == r_trail):
-                                seg = make_segment(SegmentTag.KanaTrail, w_char,
+                                seg = Segment(SegmentTag.KanaTrail, w_char,
                                               dic_r, cr['id'], reading[:rl])
                                 n_branch = Tree(b, seg)
                                 branches_at[w_index+2].append(n_branch)
                                 new_branches += 1
     return new_branches    
-
-
 
     
 
@@ -290,7 +286,7 @@ def print_segments(k, r):
     print "%s[%s]" % (k, r)
     segments = solve_reading(k, r)
 
-    if len(segments) == 0:
+    if segments is None:
         print 'unknown'
     else:
         for s in segments:

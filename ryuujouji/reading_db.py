@@ -60,12 +60,12 @@ def db_populate_kanji_readings():
     s = "SELECT * FROM reading WHERE r_type='ja_on' OR r_type='ja_kun'"
     readings = kd_c.execute(s).fetchall()
 
-    bases_used = []
+    bases_used = {}
     lastchar = None
     for r in readings:
         char = r['character_literal']
         if char != lastchar:
-            bases_used = []
+            bases_used.clear()
             
         reading = r['reading']
         if reading[-1] == u"-":
@@ -76,7 +76,7 @@ def db_populate_kanji_readings():
         (base,s,oku) = reading.partition('.')
         
         if base not in bases_used:
-            bases_used.append(base)
+            bases_used[base] = True
             reading_l.append([char, base, r['r_type']])
         reading_l.append([char, reading, r['r_type']])
         
@@ -97,8 +97,8 @@ def db_populate_kanji_readings():
  
 
 def get_connection():
-        conn = sqlite3.connect(READINGS_PATH)
-        return conn
+    conn = sqlite3.connect(READINGS_PATH)
+    return conn
 
 
 if __name__ == "__main__":
