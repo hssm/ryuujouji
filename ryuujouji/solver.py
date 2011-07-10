@@ -140,9 +140,11 @@ def __solve_character(g_word, w_index, g_reading, branches, branches_at):
         print "Shouldn't be here for now."
         return None
     
+    
     for cr in char_readings:
+        
         (dic_r,s,dic_o) = cr['reading'].partition('.')
-
+       
         r = dic_r #mutable
         o = dic_o #mutable
 
@@ -174,7 +176,7 @@ def __solve_character(g_word, w_index, g_reading, branches, branches_at):
                 soku_r = r[:-1] + unichr(ord(r[-1])-1)
                 variants.append((soku_r, SegmentTag.Sokuon))
 
-        if o is not u'':
+        if ol > 0:
             #The readings from kanjidic always have hiragana okurigana
             oku_variants.append((o, SegmentTag.OkuRegular))
             
@@ -212,7 +214,7 @@ def __solve_character(g_word, w_index, g_reading, branches, branches_at):
                     r = kata_to_hira(r)
                      
                 #Okurigana branch (if it has any)
-                if o is not u'':
+                if ol > 0:
                     #Try all okurigana variants
                     for (ov, otag) in oku_variants:
                         #Check for matches in the word
@@ -245,6 +247,8 @@ def __solve_character(g_word, w_index, g_reading, branches, branches_at):
                         branches_at[w_index+1].append(n_branch)
                         new_branches += 1
                         
+                        #TODO: remove this, replace with below TODO solution
+                        
                         #"Trailing kana" branch, for words like 守り人 = もりびと
                         #The り is part of the reading for 守 but isn't okurigana.
                         if len(word) > 1:
@@ -259,6 +263,11 @@ def __solve_character(g_word, w_index, g_reading, branches, branches_at):
                                 n_branch = Tree(b, seg)
                                 branches_at[w_index+2].append(n_branch)
                                 new_branches += 1
+        
+    
+    #TODO: try manual alignment here if no new branches generated,
+    #followed by some intelligent guess if the that fails, too.
+    
     return new_branches    
 
     
