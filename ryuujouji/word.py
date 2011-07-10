@@ -49,19 +49,14 @@ class Word():
             word_id = c.lastrowid
             
             if self.segments is not None:
-                seg_list = []
-                tag_list = []
                 for s in self.segments:
-                    seg_list.append([word_id, s.reading_id, s.character, s.index,
-                                    s.indexr])
+                    c.execute(seg_ins,
+                              [word_id, s.reading_id, s.character, s.index,
+                               s.indexr])
                     segment_id = c.lastrowid
-                    for tag in s.tags:
-                        tag_list.append([segment_id, tag])
-                        
-                c.executemany(seg_ins, seg_list)
-                c.executemany(tag_ins, tag_list)
                 
-                    
+                    for tag in s.tags:
+                        c.execute(tag_ins, [segment_id, tag])
         
         #We don't want to try inserting segments and tags if the word
         #already exists in the database (because they will already be there).
