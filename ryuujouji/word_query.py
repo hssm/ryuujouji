@@ -73,7 +73,7 @@ if __name__ == '__main__':
     dbpath = 'dbs/jmdict_solutions.sqlite'
     #word_db.create_db(dbpath)
     q = WordQuery(dbpath)
-    words = q.contains_char(u'贅')
+    words = q.contains_char(u'腔')
     for w in words:
         print w.word, w.reading
     

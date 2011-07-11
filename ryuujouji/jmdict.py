@@ -117,6 +117,8 @@ if __name__ == "__main__":
     print_solving_stats()     
 #    dry_run()
 
+#There are 159207 entries in the database. A solution has been found for 141433 of them. (88%)
+#There are 159207 entries in the database. A solution has been found for 139151 of them. (87%)
 #There are 159207 entries in the database. A solution has been found for 139520 of them. (87%)
 #There are 159207 entries in JMdict. A solution has been found for 131447 of them. (82%)
 
