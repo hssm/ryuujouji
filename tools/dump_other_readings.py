@@ -6,7 +6,7 @@ import os
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.sql import select, and_
  
-JMDICT_PATH = "../dbs/jmdict.sqlite"
+JMDICT_PATH = "../ryuujouji/dbs/jmdict.sqlite"
 
 def dump_other_readings():
     print "Dumping extra character reading data..."
@@ -25,7 +25,9 @@ def dump_other_readings():
     others = []
     for k in kebs:
         if len(k.keb) == 1:
-            if (k.keb >= u'\uFF21' and k.keb <= u'\uFF5A') or (k.keb >= u'\uFF10' and k.keb <= u'\uFF19'):
+            if ((k.keb >= u'\uFF21' and k.keb <= u'\uFF5A') or
+            (k.keb >= u'\uFF10' and k.keb <= u'\uFF19') or
+            (k.keb >= u'\u0370' and k.keb <= u'\u03FF')): #greek alphabet
                 s = select([r_ele.c['reb']],
                             r_ele.c.entry_ent_seq==k.entry_ent_seq)
                 
@@ -54,5 +56,3 @@ if __name__ == "__main__":
         print "Cannot continue without it."
     else:
         dump_other_readings()
-
-        #no lower case m, no lower case s

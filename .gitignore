@@ -42,3 +42,4 @@ pip-log.txt
 .project
 .settings
 .pydevproject
+.directory
