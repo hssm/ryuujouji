@@ -126,8 +126,6 @@ def __solve_character(g_word, w_index, g_reading, branches, branches_at):
     new_branches = 0
     w_char = g_word[w_index]
 
-    is_last = (w_index == len(g_word)-1) 
-
     #replace 々 with its respective kanji
     if w_char == u'々' and w_index > 0:
         q_char = g_word[w_index-1]
@@ -156,6 +154,7 @@ def __solve_character(g_word, w_index, g_reading, branches, branches_at):
         oku_variants = []
     
         word = g_word[w_index:]
+        word_len = len(word) #so we don't check ahead of it
 
         variants.append((cr['reading'][:rl], SegmentTag.Regular))
 
@@ -223,7 +222,7 @@ def __solve_character(g_word, w_index, g_reading, branches, branches_at):
                         
                         #Note: okurigana in the word is always hiragana.
                         #However, the reading might still have it as katakana.
-                        #If it is, convert the oku variant to katakana also
+                        #If it is, convert the oku variant to katakana as well
                         #so we can compare them.
                         if r == known_r and known_oku == ov:
                             if is_kata(known_oku_r) and not is_kata(ov):
@@ -240,47 +239,47 @@ def __solve_character(g_word, w_index, g_reading, branches, branches_at):
                                 
                         #try combining okurigana as if it were part of the
                         #normal reading
-                        comb = r+o
-
-                        if reading.startswith(comb):
-                                seg = Segment('realigned', w_char,
-                                              cr['reading'], cr['id'],
-                                              reading[:len(comb)])
-                                seg.oku_reading = ov 
-                                seg.tags.append(otag)
-                                n_branch = Tree(b, seg)
-                                branches_at[w_index+1].append(n_branch)
-                                new_branches += 1
+                        comb = r+ov
+                        known_comb = reading[:rl+ol]
+                        if comb == known_comb:
+                            seg = Segment('Combined', w_char,
+                                          cr['reading'], cr['id'],
+                                          reading[:rl+ol])
+                            seg.oku_reading = ov 
+                            seg.tags.append('OkuCombined')
+                            n_branch = Tree(b, seg)
+                            branches_at[w_index+1].append(n_branch)
+                            new_branches += 1
                             
                 #No Okurigana branch
                 else:
-                    #Branch for standard reading with no transformations.
-                    if known_r.startswith(r):
-                        #This branch for regular words and readings.
+                    #we want a complete match of reading to kanji reading variant
+                    match_length = 0
+                    
+                    #trailing kana (after kanji) in the word that is part of the reading
+                    w_trail = 0 
+                    
+                    for (i, j) in zip(known_r, r):
+                        if i == j:
+                            match_length += 1
+                            #also check ahead for kana in the word that could
+                            #belong to this reading
+                            if w_trail+1 < word_len and word[w_trail + 1] == i:
+                                w_trail += 1
+                    
+                    if match_length == len(r):
                         seg = Segment(tag, w_char, dic_r, cr['id'], reading[:rl])
                         n_branch = Tree(b, seg)
                         branches_at[w_index+1].append(n_branch)
                         new_branches += 1
                         
-                        #TODO: remove this, replace with below TODO solution
-                        
-                        #"Trailing kana" branch, for words like 守り人 = もりびと
-                        #The り is part of the reading for 守 but isn't okurigana.
-#                        if len(word) > 1:
-#                            w_trail = word[1]
-#                            r_trail = reading[rl-1]
-#                            if is_kata(r_trail) and not is_kata(w_trail):
-#                                w_trail = hira_to_kata(w_trail)
-#                                
-#                            if (is_kana(w_trail) and w_trail == r_trail):
-#                                seg = Segment(SegmentTag.KanaTrail, w_char,
-#                                              dic_r, cr['id'], reading[:rl])
-#                                n_branch = Tree(b, seg)
-#                                branches_at[w_index+2].append(n_branch)
-#                                new_branches += 1
-         
-    #TODO: try manual alignment/intelligent guess here
-        
+                        if w_trail > 0:
+                            seg = Segment(SegmentTag.KanaTrail, w_char,
+                                          dic_r, cr['id'], reading[:rl])
+                            n_branch = Tree(b, seg)
+                            branches_at[w_index+1+w_trail].append(n_branch)
+                            new_branches += 1
+
     return new_branches    
 
     
@@ -349,7 +348,7 @@ if __name__ == "__main__":
 #    print_verbose(u"全国津々浦々", u"ぜんこくつつうらうら")
 #    print_verbose(u"作り茸", u"ツクリタケ")     
 #    print_verbose(u"別荘", u"ベッソウ")
-    print_verbose(u"守り人", u"モリビト")
+#    print_verbose(u"守り人", u"モリビト")
 #    print_verbose(u"建て替える", u"タテカエル")
 #    print_verbose(u"一つ", u"ヒトツ")
 #    
@@ -370,8 +369,10 @@ if __name__ == "__main__":
 ##    
 #    print_verbose(u'あの',u'アノ')
 #    print_verbose(u'アノ',u'あの')
-#    print_verbose(u'明かん',u'あかん')
-    
+#   print_verbose(u'明かん',u'あかん')
+
+    print_verbose(u'人となり',u'ひととなり')
+ 
 #    print_verbose(u'プログラム制御式及びキーボード制御式のアドレス指定可能な記憶域をもつ計算器',
 #                  u'プログラムせいぎょしきおよびキーボードせいぎょしきのアドレスしていかのうなきおくいきをもつけいさんき')
    

@@ -52,11 +52,13 @@ def populate_db():
         #corresponding keb
         if r['re_restr_keb'] is not None:
             if r['re_restr_keb'] == r['k_ele_keb']:
+                #print r['k_ele_keb'], r['r_ele_reb']
                 word = Word(conn, r['k_ele_keb'], r['r_ele_reb'])
                 word.save()
         else: #otherwise, all rebs apply to all kebs in this entry
             #but some readings don't use kanji, so no related kebs
             if r['r_ele_re_nokanji'] is not None:
+                #print r['k_ele_keb'], r['r_ele_reb']
                 word = Word(conn, r['k_ele_keb'], r['r_ele_reb'])
                 word.save()
     conn.commit()
@@ -117,6 +119,8 @@ if __name__ == "__main__":
     print_solving_stats()     
 #    dry_run()
 
+#There are 159207 entries in the database. A solution has been found for 143303 of them. (90%)
+#There are 159207 entries in the database. A solution has been found for 141812 of them. (89%)
 #There are 159207 entries in the database. A solution has been found for 141433 of them. (88%)
 #There are 159207 entries in the database. A solution has been found for 139151 of them. (87%)
 #There are 159207 entries in the database. A solution has been found for 139520 of them. (87%)
