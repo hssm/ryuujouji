@@ -173,7 +173,15 @@ def __solve_character(g_word, w_index, g_reading, branches, branches_at):
             elif first_k == u'チ':
                 d = u'ジ'
                 daku_r = d + cr['reading'][1:rl]
-                variants.append((daku_r, SegmentTag.Dakuten))                
+                variants.append((daku_r, SegmentTag.Dakuten))
+            elif first_k == u'つ' :
+                d = u'ず'
+                daku_r = d + cr['reading'][1:rl]
+                variants.append((daku_r, SegmentTag.Dakuten))
+            elif first_k == u'ツ':
+                d = u'ズ'
+                daku_r = d + cr['reading'][1:rl]
+                variants.append((daku_r, SegmentTag.Dakuten))             
                 
                                
         if has_handakuten(first_k):
