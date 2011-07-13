@@ -165,6 +165,16 @@ def __solve_character(g_word, w_index, g_reading, branches, branches_at):
             d = get_dakuten(first_k)
             daku_r = d + cr['reading'][1:rl]
             variants.append((daku_r, SegmentTag.Dakuten))
+            
+            if first_k == u'ち' :
+                d = u'じ'
+                daku_r = d + cr['reading'][1:rl]
+                variants.append((daku_r, SegmentTag.Dakuten))
+            elif first_k == u'チ':
+                d = u'ジ'
+                daku_r = d + cr['reading'][1:rl]
+                variants.append((daku_r, SegmentTag.Dakuten))                
+                
                                
         if has_handakuten(first_k):
             d = get_handakuten(first_k)
@@ -205,7 +215,7 @@ def __solve_character(g_word, w_index, g_reading, branches, branches_at):
             known_oku_r = reading[rl:rl+ol]
             
             kr_is_kata = is_kata(known_r[0])
-
+            
             for (r, tag) in variants:
                 #If they're not both katakana, convert the non-katakana
                 #to hiragana so we can compare them.
@@ -219,7 +229,7 @@ def __solve_character(g_word, w_index, g_reading, branches, branches_at):
                     #Try all okurigana variants
                     for (ov, otag) in oku_variants:
                         #Check for matches in the word
-                        
+
                         #Note: okurigana in the word is always hiragana.
                         #However, the reading might still have it as katakana.
                         #If it is, convert the oku variant to katakana as well
@@ -258,7 +268,6 @@ def __solve_character(g_word, w_index, g_reading, branches, branches_at):
                     
                     #trailing kana (after kanji) in the word that is part of the reading
                     w_trail = 0 
-                    
                     for (i, j) in zip(known_r, r):
                         if i == j:
                             match_length += 1
@@ -371,11 +380,12 @@ if __name__ == "__main__":
 #    print_verbose(u'アノ',u'あの')
 #   print_verbose(u'明かん',u'あかん')
 
-    print_verbose(u'人となり',u'ひととなり')
+#    print_verbose(u'人となり',u'ひととなり')
+    
  
 #    print_verbose(u'プログラム制御式及びキーボード制御式のアドレス指定可能な記憶域をもつ計算器',
 #                  u'プログラムせいぎょしきおよびキーボードせいぎょしきのアドレスしていかのうなきおくいきをもつけいさんき')
    
-#    
-    print_verbose(u'尽し', u'づくし')
-    print_verbose(u'引篭り', u'ひきこもり')
+#    print_verbose(u'尽し', u'づくし')
+#    print_verbose(u'引篭り', u'ひきこもり')
+    print_verbose(u'金詰り',u'かねづまり')
