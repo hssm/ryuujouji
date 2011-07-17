@@ -281,7 +281,7 @@ if __name__ == "__main__":
 
 #    print_verbose(u'漢字', u'かんじ')
 #    print_verbose(u"小牛", u"こうし")
-    print_verbose(u"バス停", u"バスてい")
+#    print_verbose(u"バス停", u"バスてい")
 #    print_verbose(u"非常事態", u"ひじょうじたい")
 #    print_verbose(u"建て替える", u"たてかえる")
 #    print_verbose(u"小さい", u"ちいさい")
@@ -322,29 +322,30 @@ if __name__ == "__main__":
 #    
 #    print_verbose(u'先週',u'センシュウ')
 #    print_verbose(u'先週',u'せんしゅう')
-#
-#    print_verbose(u'姉さん',u'ネエサン')
-#    print_verbose(u'姉さん',u'ねえさん')
-#
+
+    print_verbose(u'姉さん',u'ネエサン')
+    print_verbose(u'姉さん',u'ねえさん')
+
 #    print_verbose(u'近寄る',u'チカヨル')
 #    print_verbose(u'近寄る',u'ちかよる')
 #
 #    print_verbose(u'弱気',u'ヨワキ')
 #    print_verbose(u'弱気',u'よわき')
-#
-#    print_verbose(u'あの',u'アノ')
-#    print_verbose(u'アノ',u'あの')
-#    print_verbose(u'明かん',u'あかん')
-#
+
+    print_verbose(u'あの',u'アノ')
+    print_verbose(u'アノ',u'あの')
+    print_verbose(u'明かん',u'あかん')
+
 #    print_verbose(u'人となり',u'ひととなり')
 #    print_verbose(u'陰',u'かげ')
 #
 #    print_verbose(u'寛',u'ゆた')    
-    
-
+#    
+    print_verbose(u'日経二二五先物',u'にっけいににごさきもの')
+#
 #    print_verbose(u'プログラム制御式及びキーボード制御式のアドレス指定可能な記憶域をもつ計算器',
 #                  u'プログラムせいぎょしきおよびキーボードせいぎょしきのアドレスしていかのうなきおくいきをもつけいさんき')
-   
+#   
 #    print_verbose(u'尽し', u'づくし')
 #    print_verbose(u'引篭り', u'ひきこもり')
-    #print_verbose(u'金詰り',u'かねづまり')
+#    print_verbose(u'金詰り',u'かねづまり')

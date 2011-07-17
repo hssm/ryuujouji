@@ -3,11 +3,10 @@
 #License: GPLv3; http://www.gnu.org/licenses/gpl.txt
 
 from segments import SegmentTag 
+from tools import is_hira
 
 HAS_DAKUTEN_LIST = list(u'かきくけこたちつてとさしすせそはひふへほ'
                         u'カキクケコタチツテトサシスセソハヒフヘホ')
-
-CAN_BE_SOKUON_LIST = HAS_DAKUTEN_LIST
 
 HAS_HANDAKUTEN_LIST = list(u'はひふへほハヒフヘホ') 
 
@@ -32,9 +31,6 @@ first_char[u'ツ'].append((u'ズ', tag))
 for kana in HAS_HANDAKUTEN_LIST:
     kana_handaku = unichr(ord(kana)+2)
     first_char[kana].append((kana_handaku, SegmentTag.Handakuten))
-
-last_char[u'つ'] = [(u'っ', SegmentTag.Sokuon)]
-last_char[u'ツ'] = [(u'ッ', SegmentTag.Sokuon)]
 
 
 #Note: there are no katakana okurigana (in kanjidic) 
@@ -78,6 +74,18 @@ def get_variants(reading):
             for var in first_list:
                 v = (var[0][:-1]+kana, tag)
                 variant_list.append(v)
+        
+    #manual addition of sokuon at the end
+    if is_hira(reading[0]):
+        soku = u'っ'
+    else:
+        soku = u'ッ'
+        
+    v = (reading[:-1]+soku, SegmentTag.Sokuon)
+    variant_list.append(v)
+    for var in first_list:
+        v = (var[0][:-1]+soku, tag)
+        variant_list.append(v)
             
     return variant_list
 
