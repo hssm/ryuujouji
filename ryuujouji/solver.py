@@ -154,7 +154,6 @@ class Solver:
                 self.__branches_at[self.__w_index+1].append(n_branch)
                 self.__usable_branches += 1
 
-    
     def __solve_character(self):
     
         #replace 々 with its respective kanji

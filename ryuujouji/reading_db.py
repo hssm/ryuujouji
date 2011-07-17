@@ -6,9 +6,9 @@ import os
 import time
 import codecs
 import sqlite3
+import tools
+import reading_query
 from paths import READINGS_PATH, KANJIDIC_PATH, OTHER_READINGS_PATH
-
-conn = None
 
 create_table =\
 '''
@@ -17,12 +17,11 @@ CREATE TABLE reading(
     character TEXT,
     reading   TEXT,
     type      TEXT,
-    UNIQUE(character, reading) ON CONFLICT REPLACE
+    UNIQUE(character, reading) ON CONFLICT IGNORE
 )
 '''
 
 def init():
-    global conn
 
     if not os.path.exists(READINGS_PATH):
         if not os.path.exists(KANJIDIC_PATH):
@@ -45,9 +44,10 @@ def init():
         conn = sqlite3.connect(READINGS_PATH)
         conn.row_factory = sqlite3.Row
         
-        
+
 def db_populate_kanji_readings():
     print "Filling database with kanji/reading data..."
+    conn = get_connection()
     c = conn.cursor()
     
     kd_conn = sqlite3.connect(KANJIDIC_PATH)
@@ -82,19 +82,34 @@ def db_populate_kanji_readings():
         
         lastchar = char
 
+    c.executemany('''INSERT INTO reading(character, reading, type)
+                     VALUES (?,?,?)''', reading_l)
+    conn.commit()
+    
+    conn = get_connection()
+    c = conn.cursor()
+    reading_l = []
+    
+    #Now add our own, non-kanjidic entries 
     f = codecs.open(OTHER_READINGS_PATH, encoding='utf-8')
     for line in f:
         line = line.strip('\n')
-        (k, s, r) = line.partition(",")
-        reading_l.append([k, r, 'other'])
+        (char, s, reading) = line.partition(",")
         
+        #Search the existing entries for the same entry, which might be in
+        #a different character set (so db constraint won't pick up on it).
+        #We don't want to add any duplicates.
+        id = reading_query.get_id(char, reading)
+        if id is None:
+            reading_l.append([char, reading, 'other'])
+
     c.executemany('''INSERT INTO reading(character, reading, type)
                      VALUES (?,?,?)''', reading_l)
-
+    conn.commit()
+    
     print 'Filling database with kanji/reading data took '\
             '%s seconds' % (time.time() - start)
-    conn.commit()
- 
+    
 
 def get_connection():
     conn = sqlite3.connect(READINGS_PATH)

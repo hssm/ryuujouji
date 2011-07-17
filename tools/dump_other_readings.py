@@ -25,15 +25,12 @@ def dump_other_readings():
     others = []
     for k in kebs:
         if len(k.keb) == 1:
-            if ((k.keb >= u'\uFF21' and k.keb <= u'\uFF5A') or
-            (k.keb >= u'\uFF10' and k.keb <= u'\uFF19') or
-            (k.keb >= u'\u0370' and k.keb <= u'\u03FF')): #greek alphabet
-                s = select([r_ele.c['reb']],
-                            r_ele.c.entry_ent_seq==k.entry_ent_seq)
-                
-                rebs = engine.execute(s)
-                for r in rebs:
-                    others.append(k.keb + ',' + r.reb)
+            s = select([r_ele.c['reb']],
+                        r_ele.c.entry_ent_seq==k.entry_ent_seq)
+
+            rebs = engine.execute(s)
+            for r in rebs:
+                others.append(k.keb + ',' + r.reb)
             
     others.extend(get_manual_additions())
     others.sort()

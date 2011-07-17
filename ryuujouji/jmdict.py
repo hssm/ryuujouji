@@ -111,21 +111,14 @@ if __name__ == "__main__":
     dbpath = 'dbs/jmdict_solutions.sqlite'
     
     from word_db import create_db
-    create_db(dbpath)
+#    create_db(dbpath)
     make_connection(dbpath)
-    populate_db()
+#    populate_db()
      
-    print_solving_stats()     
-#    dry_run()
+#    print_solving_stats()     
+    dry_run()
 
+#There are 159207 entries in the database. A solution has been found for 145562 of them. (91%)
+#There are 159207 entries in the database. A solution has been found for 143657 of them. (90%)
 #There are 159207 entries in the database. A solution has been found for 143532 of them. (90%)
-#There are 159207 entries in the database. A solution has been found for 143513 of them. (90%)
-#There are 159207 entries in the database. A solution has been found for 143460 of them. (90%)
-#There are 159207 entries in the database. A solution has been found for 143405 of them. (90%)
-#There are 159207 entries in the database. A solution has been found for 143303 of them. (90%)
-#There are 159207 entries in the database. A solution has been found for 141812 of them. (89%)
-#There are 159207 entries in the database. A solution has been found for 141433 of them. (88%)
-#There are 159207 entries in the database. A solution has been found for 139151 of them. (87%)
-#There are 159207 entries in the database. A solution has been found for 139520 of them. (87%)
-#There are 159207 entries in JMdict. A solution has been found for 131447 of them. (82%)
 
