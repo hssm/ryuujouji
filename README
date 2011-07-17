@@ -1,19 +1,77 @@
-ryuujouji tries to figure out which portion a Japanese word's reading
-belongs to which Kanji character. This will allow more granular
-searching of words in dictionary applications (or any software that
-searches for Japanese words) by being able to search for "words that
-use this character AND this reading". The name ryuujouji (粒状字,
-"granular characters") comes from this goal.
+ryuujouji (粒状字) -- granular characters.
+
+Installation tools and usage instructions are forthcoming.
+
+ryuujouji is a grapheme-phoneme aligner for the Japanese language.
+That is, given a word and its reading, it tries to determine which
+portion of the reading (the phoneme) belongs to which character in
+the word (the grapheme). For example:
+
+非常事態[ひじょうじたい]
+非 ひ
+常 じょう
+事 じ
+態 たい
+
+日帰り[ひがえり]
+日 ひ
+帰 がえり
+
+建て替える[タテカエル]
+建 タテ
+替 カエル
+
+In addition to determining the alignment, the transformations
+undertaken by each reading (from its original dictionary reading) are
+tagged and stored in a database. The goal is to allow very granular
+searching in dictionary or other word-search applications, such as
+searching for words including a character *and* a specific reading of
+it. The project was created with the intent of supplying 
+Japanese-language learning software with the ability to find the most
+"knowable" words from what is already known by a learner by grading
+each unseen word based on the components that appear in it. The main
+components are the character, the reading, the transformation(s) of the
+reading, and its index in the word. Each of these components is refered
+to as a "segment" of a word in this project.
+
+Here is some example verbose output, showing the transformation tags
+and indexes generated, as well as the original dictionary reading that
+the segment was derived from:
+
+包み紙[つつみがみ]
+character[包] reading[つつみ] index[0] indexr[1] tags['Regular', 'OkuInflected'] dic_reading[つつ.む] reading_id[9783]
+character[紙] reading[がみ] index[1] indexr[0] tags['Dakuten'] dic_reading[かみ] reading_id[4272]
+
+守り人[もりびと]
+character[守] reading[もり] index[0] indexr[1] tags['KanaTrail'] dic_reading[もり] reading_id[4658]
+character[人] reading[びと] index[1] indexr[0] tags['Dakuten'] dic_reading[ひと] reading_id[5637]
+
+Note that the indexes above (with indexr being the reverse index)
+reflect the nth occurence of a kanji and ignores kana (both will be
+available in the future).
+
+Unlike existing research, ryuujouji does not employ any statistical
+method to determine the alignment. All solutions are constructed using
+data available in KANJIDIC2 and hand-crafted rules that account for
+particular features of the Japanese language.
+
+Presently, ryuujouji is able to build a solution for 92% of the unique
+word/reading entries in JMdict (that's 147,129 out of 159,207 in the
+current test data).
 
 This is experimental software and doesn't guarantee any degree of
-accuracy.
+accuracy. While a large number of words can generate a solution,
+many generate multiple solutions. In the current version, the
+solution with the least number of segments is chosen. In the future,
+a more intelligent ranking algorithm will be used to determine the
+more likely solution.
+
+Not that many words don't have a solution, such as
+those with gikun or jukujikun readings. 
+(http://en.wikipedia.org/wiki/Kanji#Other_readings)
+
+
 
 This project makes use of KANJIDIC2 and JMdict. Please see:
 KANJIDIC2 page: http://www.csse.monash.edu.au/~jwb/kanjidic2/
 JMdict page: http://www.csse.monash.edu.au/~jwb/jmdict.html
-
-The project builds a database of solutions against the entries in
-JMdict. Currently, it finds a solution for 82% of the kanji/reading
-pairs that exist in it. Many words don't have a solution, such as
-those with gikun or jukujikun readings. 
-(http://en.wikipedia.org/wiki/Kanji#Other_readings)
