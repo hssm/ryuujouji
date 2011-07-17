@@ -9,7 +9,7 @@ class Branch:
         #If root
         if segment is None:
             self.next_reading = 0
-            self.k_in_branch = 0
+            self.k_in_branch = -1
         else:
             
             #The index in the reading that the next segment in this branch

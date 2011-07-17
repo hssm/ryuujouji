@@ -10,7 +10,7 @@ parser.add_argument('--encoding', default='utf-8')
 parser.add_argument('-d', '--delimiter', default=u' ')
 args = parser.parse_args()
 
-from solver import Solver
+import solver
 
 try:
     
@@ -19,8 +19,7 @@ try:
         line = line.rstrip()
         try:
             word, reading = line.split(args.delimiter, 1)
-            s = Solver(word, reading)
-            s.print_segments()
+            s = solver.print_segments(word, reading)
             print
         except ValueError, e:
             print "Line %d: Cannot parse line -- [%s]" % (i, line)
