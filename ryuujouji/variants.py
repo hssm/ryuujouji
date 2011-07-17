@@ -51,7 +51,7 @@ oku_last_char[u'つ'] = [(u'ち', tag)]
 
 
 oku_last_char[u'つ'].append((u'っ', SegmentTag.OkuSokuon))
-#oku_last_char[u'る'].append((u'', 'Ghostly')) 
+oku_last_char[u'る'].append((u'', 'RuTrim')) 
 
 def get_variants(reading):
     variant_list = []
