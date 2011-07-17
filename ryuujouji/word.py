@@ -20,8 +20,8 @@ class Word():
         else:
             self.known = True
             self.id = row['id']
-        
-        self.segments = solver.solve_reading(word, reading)
+            
+        self.segments = solver.solve(word, reading)
         if self.segments is None:
             self.solved = False
         else:
