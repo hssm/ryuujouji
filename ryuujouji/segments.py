@@ -11,26 +11,9 @@ class SegmentTag:
 
 class Segment:
     """Class to hold segment information."""
-    #A list of SegmentTags denoting the types of transformations of the reading.
-    tags = []
-    #The character we are solving
-    character = None
-    #The nth kanji in the word
-    index = None
-    #Like nth_kanji, but nth from the right
-    indexr = None
-    #The dictionary reading of the character
-    dic_reading = None
-    #The database ID of the reading used to solve this segment
-    reading_id = None
-    #The reading of this segment as it appears in the word
-    reading = None
-    #The reading of this segment's okurigana as it appears in the word
-    oku_reading = None
-    #If the segment holds a kanji character (instead of kana)
-    is_kanji = None
     
-    def __init__(self, tags, character, dic_reading, reading_id, reading):
+    def __init__(self, tags, character, dic_reading, reading_id, reading,
+                 grapheme):
         if tags is not None:
             tags = [tags]
             is_kanji = True
@@ -38,12 +21,29 @@ class Segment:
             tags = []
             is_kanji = False
         
+        
+        #A list of SegmentTags denoting the types of transformations of the
+        #reading.
         self.tags = tags
+        #The character we are solving
         self.character = character
+        #The nth kanji in the word
+        self.index = None
+        #Like nth_kanji, but nth from the right
+        self.indexr = None
+        #The dictionary reading of the character
         self.dic_reading = dic_reading
+        #The database ID of the reading used to solve this segment
         self.reading_id = reading_id
+        #The grapheme of this segment
+        self.grapheme = grapheme
+        #The reading of this segment
         self.reading = reading
+        #The reading of this segment's okurigana as it appears in the word
+        self.oku_reading = None
+        #If the segment holds a kanji character (instead of kana)
         self.is_kanji = is_kanji
+        
 
 
     def __str__(self):

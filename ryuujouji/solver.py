@@ -40,6 +40,7 @@ def print_verbose(word, reading):
     else:
         for s in segments:
             print 'character[%s]' % s.character,
+            print 'grapheme[%s]' % s.grapheme,
             print 'reading[%s]' % s.reading,
             print 'index[%s]' % s.index,
             print 'indexr[%s]' % s.indexr,
@@ -149,7 +150,8 @@ class Solver:
                 r_char = kata_to_hira(r_char) 
         
             if self.__w_char == r_char:
-                s = Segment(None, self.__w_char, self.__w_char, 0, self.reading[r_index])
+                s = Segment(None, self.__w_char, self.__w_char, 0,
+                            self.reading[r_index], self.__w_char)
                 n_branch = Branch(branch, s)
                 self.__branches_at[self.__w_index+1].append(n_branch)
                 self.__usable_branches += 1
@@ -225,7 +227,7 @@ class Solver:
                                 #ALSO check for matches in the reading
                                 if ov == known_oku_r:
                                     seg = Segment(tag, self.__w_char, cr['reading'], cr['id'],
-                                                  reading[:rl+ol])
+                                                  reading[:rl+ol], word[:+1+ovl])
                                     seg.oku_reading = ov 
                                     seg.tags.append(otag)
                                     n_branch = Branch(b, seg)
@@ -239,7 +241,7 @@ class Solver:
                             if comb == known_comb:
                                 seg = Segment('Combined', self.__w_char,
                                               cr['reading'], cr['id'],
-                                              reading[:rl+ol])
+                                              reading[:rl+ol], word[:1])
                                 seg.oku_reading = ov 
                                 seg.tags.append('OkuCombined')
                                 n_branch = Branch(b, seg)
@@ -262,19 +264,19 @@ class Solver:
                                     w_trail += 1
                         
                         if match_length == len(r):
-                            seg = Segment(tag, self.__w_char, dic_r, cr['id'], reading[:rl])
+                            seg = Segment(tag, self.__w_char, dic_r, cr['id'],
+                                          reading[:rl], word[:1])
                             n_branch = Branch(b, seg)
                             self.__branches_at[self.__w_index+1].append(n_branch)
                             self.__usable_branches += 1
                             
                             if w_trail > 0:
                                 seg = Segment(SegmentTag.KanaTrail, self.__w_char,
-                                              dic_r, cr['id'], reading[:rl])
+                                              dic_r, cr['id'], reading[:rl],
+                                              word[:1+w_trail])
                                 n_branch = Branch(b, seg)
                                 self.__branches_at[self.__w_index+1+w_trail].append(n_branch)
                                 self.__usable_branches += 1  
-
-
 
 
 if __name__ == "__main__":
@@ -341,7 +343,7 @@ if __name__ == "__main__":
 #
 #    print_verbose(u'寛',u'ゆた')    
 #    
-    print_verbose(u'日経二二五先物',u'にっけいににごさきもの')
+    print_verbose(u'高じる',u'こうじる')
 #
 #    print_verbose(u'プログラム制御式及びキーボード制御式のアドレス指定可能な記憶域をもつ計算器',
 #                  u'プログラムせいぎょしきおよびキーボードせいぎょしきのアドレスしていかのうなきおくいきをもつけいさんき')
