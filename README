@@ -55,22 +55,21 @@ method to determine the alignment. All solutions are constructed using
 data available in KANJIDIC2 and hand-crafted rules that account for
 particular features of the Japanese language.
 
-Presently, ryuujouji is able to build a solution for 92% of the unique
-word/reading entries in JMdict (that's 147,129 out of 159,207 in the
-current test data).
+Accuracy is measured against a manually aligned test data set from
+existing research that contains 5000 instances. Please see:
+http://www.aclweb.org/anthology-new/W/W99/W99-0902.pdf
+The data set has its own license and can be found here:
+http://www.csse.unimelb.edu.au/research/lt/resources/gpalignment/gpalignment.tgz
 
-This is experimental software and doesn't guarantee any degree of
-accuracy. While a large number of words can generate a solution,
-many generate multiple solutions. In the current version, the
-solution with the least number of segments is chosen. In the future,
-a more intelligent ranking algorithm will be used to determine the
-more likely solution.
+ryuujouji currently achieves 90.28% accuracy on this data set, but is
+expected to increase in coming revisions. Also, ryuujouji is able to
+build a solution for 92% of the unique word/reading entries in JMdict
+(that's 147,129 out of 159,207 in the current test data), although
+their accuracy can't be tested.
 
-Not that many words don't have a solution, such as
+Note that many words don't have a solution, such as
 those with gikun or jukujikun readings. 
 (http://en.wikipedia.org/wiki/Kanji#Other_readings)
-
-
 
 This project makes use of KANJIDIC2 and JMdict. Please see:
 KANJIDIC2 page: http://www.csse.monash.edu.au/~jwb/kanjidic2/
