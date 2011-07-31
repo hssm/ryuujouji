@@ -75,12 +75,12 @@ def get_variants(reading):
                 v = (var[0][:-1]+kana, tag)
                 variant_list.append(v)
         
-    #manual addition of sokuon at the end
     if is_hira(reading[0]):
         soku = u'っ'
     else:
         soku = u'ッ'
-        
+    
+    #manual addition of sokuon at the end    
     v = (reading[:-1]+soku, SegmentTag.Sokuon)
     variant_list.append(v)
     for var in first_list:
@@ -92,7 +92,6 @@ def get_variants(reading):
 def get_oku_variants(okurigana):
     oku_variant_list = []
     
-    #Figure out all okurigana variations so we can attach them to each reading
     if len(okurigana) > 0:
         #Add the original one
         oku_variant_list.append((okurigana, SegmentTag.OkuRegular,
@@ -101,7 +100,8 @@ def get_oku_variants(okurigana):
         oku_last_k = okurigana[-1]
         if oku_last_k in oku_last_char:
             for (oku, tag) in oku_last_char[oku_last_k]:
-                oku_variant_list.append((okurigana[:-1]+oku, tag, len(oku)))
+                new_oku = okurigana[:-1]+oku
+                oku_variant_list.append((new_oku, tag, len(new_oku)))
 
     return oku_variant_list
                         
