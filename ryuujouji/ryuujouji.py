@@ -6,6 +6,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Find reading segments.')
 parser.add_argument('-f', type = argparse.FileType('r'), default = '-')
+#parser.add_argument('-c', '--char-only', default=False)
 parser.add_argument('--encoding', default='utf-8')
 parser.add_argument('-d', '--delimiter', default=u' ')
 args = parser.parse_args()

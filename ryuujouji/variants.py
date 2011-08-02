@@ -12,7 +12,7 @@ HAS_HANDAKUTEN_LIST = list(u'はひふへほハヒフヘホ')
 
 first_char = {}
 oku_last_char = {}
-last_char = {}
+
 
 #We know the order we are inserting the dictionary keys, so there is no need
 #to check their existence first.
@@ -49,44 +49,48 @@ oku_last_char[u'つ'] = [(u'ち', tag)]
 oku_last_char[u'つ'].append((u'っ', SegmentTag.OkuSokuon))
 oku_last_char[u'る'].append((u'', 'RuTrim')) 
 
-def get_variants(reading):
+def get_variants(reading, okurigana):
     variant_list = []
     
     first = reading[0]
-    last = reading[-1]
-
-    #The original reading
-    variant_list.append((reading, SegmentTag.Regular))
+    oku_var_list = get_oku_variants(okurigana)
     
-    first_list = []
-
+    #The original reading
+    variant_list.append((reading, SegmentTag.Regular, len(reading)))
+  
     if first in first_char:
         for (kana, tag) in first_char[first]:
-            v = (kana+reading[1:], tag)
+            new_r = kana+reading[1:] 
+            v = (new_r, tag, len(new_r))
             variant_list.append(v)
-            first_list.append(v)
-    if last in last_char:
-        for (kana, tag) in last_char[last]:
-            v = (reading[:-1]+kana, tag)
-            variant_list.append(v)
-            
-            #also add variants with both first and last character modified
-            for var in first_list:
-                v = (var[0][:-1]+kana, tag)
-                variant_list.append(v)
-        
+               
     if is_hira(reading[0]):
         soku = u'っ'
     else:
         soku = u'ッ'
     
+    tmp_list = []
+    
+    for var in variant_list:
+        new_r = var[0][:-1]+soku 
+        v = (new_r, 'regvar', len(new_r))
+        tmp_list.append(v)
+    
     #manual addition of sokuon at the end    
-    v = (reading[:-1]+soku, SegmentTag.Sokuon)
+    soku_r = reading[:-1]+soku 
+    v = (soku_r, SegmentTag.Sokuon, len(soku_r))
     variant_list.append(v)
-    for var in first_list:
-        v = (var[0][:-1]+soku, tag)
-        variant_list.append(v)
-            
+    
+    variant_list.extend(tmp_list)
+    
+    tmp_list = []
+    
+    for (var, tag, rl) in variant_list:
+        for (ovar, otag, ovl) in oku_var_list:
+            v = (var+ovar, 'zzz', len(var+ovar))
+            tmp_list.append(v)
+    variant_list.extend(tmp_list)
+    
     return variant_list
 
 def get_oku_variants(okurigana):

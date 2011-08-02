@@ -51,7 +51,7 @@ for line in f:
             for sol in solutions:
                 print "Solution #:"
                 for s in sol:
-                    print "           %s %s" % (s.character, s.reading)
+                    print "           %s %s" % (s.grapheme, s.reading)
             print "---------------------------"
         else:
             print line

@@ -111,12 +111,12 @@ if __name__ == "__main__":
     dbpath = 'dbs/jmdict_solutions.sqlite'
     
     from word_db import create_db
-#   create_db(dbpath)
+    create_db(dbpath)
     make_connection(dbpath)
-#    populate_db()
+    populate_db()
      
-#    print_solving_stats()     
-    dry_run()
+    print_solving_stats()     
+#    dry_run()
 
 #There are 159207 entries in the database. A solution has been found for 147129 of them. (92%)
 #There are 159207 entries in the database. A solution has been found for 145562 of them. (91%)

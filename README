@@ -1,6 +1,13 @@
 ryuujouji (粒状字) -- granular characters.
 
-Installation tools and usage instructions are forthcoming.
+Present state of project:
+- Accuracy is now on 94.46%.
+- The code is an utter mess. Please don't look at it. Thanks.
+- Tagging is mostly a placeholder right now and is not correct.
+- There are many inefficiencies that can be sped up significantly.
+- Installation tools and usage instructions are forthcoming.
+
+--------------
 
 ryuujouji is a grapheme-phoneme aligner for the Japanese language.
 That is, given a word and its reading, it tries to determine which
@@ -15,11 +22,11 @@ the word (the grapheme). For example:
 
 日帰り[ひがえり]
 日 ひ
-帰 がえり
+帰り がえり
 
 建て替える[タテカエル]
-建 タテ
-替 カエル
+建て タテ
+替える カエル
 
 In addition to determining the alignment, the transformations
 undertaken by each reading (from its original dictionary reading) are
@@ -61,10 +68,10 @@ http://www.aclweb.org/anthology-new/W/W99/W99-0902.pdf
 The data set has its own license and can be found here:
 http://www.csse.unimelb.edu.au/research/lt/resources/gpalignment/gpalignment.tgz
 
-ryuujouji currently achieves 90.28% accuracy on this data set, but is
+ryuujouji currently achieves 94.46% accuracy on this data set, but is
 expected to increase in coming revisions. Also, ryuujouji is able to
-build a solution for 92% of the unique word/reading entries in JMdict
-(that's 147,129 out of 159,207 in the current test data), although
+build a solution for 93% of the unique word/reading entries in JMdict
+(that's 148,322 out of 159,207 in the current test data), although
 their accuracy can't be tested.
 
 Note that many words don't have a solution, such as

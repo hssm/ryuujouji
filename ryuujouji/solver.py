@@ -34,7 +34,7 @@ def print_segments(word, reading):
         print 'unknown'
     else:
         for s in segments:
-            print "%s %s" % (s.character, s.reading)
+            print "%s %s" % (s.grapheme, s.reading)
 
 def print_verbose(word, reading):
     print "%s[%s]" % (word, reading)
@@ -56,7 +56,26 @@ def print_verbose(word, reading):
             print
     print
             
-           
+def print_all_verbose(word, reading):
+    print "%s[%s]" % (word, reading)
+    s = Solver(word, reading)
+    for sol in s.solutions:
+        if sol is None:
+            print 'unknown'
+        else:
+            print "Solution #"
+            for s in sol:
+                print 'grapheme[%s]' % s.grapheme,
+                print 'character[%s]' % s.character,
+                print 'reading[%s]' % s.reading,
+                print 'index[%s]' % s.index,
+                print 'indexr[%s]' % s.indexr,
+                print 'tags%s' % s.tags,
+                print 'dic_reading[%s]' % s.dic_reading,
+                print 'reading_id[%s]' % s.reading_id,
+                print
+        print
+
 
 class Solver:
     
@@ -194,23 +213,23 @@ class Solver:
         char_readings = c.execute(s, q_char).fetchall()
                 
         for cr in char_readings:
-            
+            #print "-- %s --" % cr['reading']
             (dic_r,s,dic_o) = cr['reading'].partition('.')
            
             r = dic_r #mutable
             o = dic_o #mutable
     
-            rl = len(r)  #reading length (non-okurigana portion)
-            ol = len(o)  #okurigana length
+            #rl = len(r)  #reading length (non-okurigana portion)
+            #ol = len(o)  #okurigana length
                    
             word = self.word[self.__w_index:]
             word_len = len(word) #so we don't check ahead of it
     
-            variants = get_variants(r)
-            oku_variants = get_oku_variants(o)
+            variants = get_variants(r, o)
+            #oku_variants = get_oku_variants(o)
             
             #The portion of the known word we want to test as okurigana
-            known_oku = word[1:ol+1]
+            #known_oku = word[1:ol+1]
 
             for b in self.__current_branches:
                 r_index = b.next_reading
@@ -220,14 +239,17 @@ class Solver:
                 reading = self.reading[r_index:]
                 
                 #The portion of the known reading we want to test for this character        
-                known_r = reading[:rl]
+                
                 #The portion of the known reading we want to test as okurigana
-                known_oku_r = reading[rl:rl+ol]
+                #known_oku_r = reading[rl:rl+ol]
                 
-                kr_is_kata = is_kata(known_r[0])
-                
-                for (r, tag) in variants:
-        
+               
+                for (r, tag, rl) in variants:
+                    #print r
+                    
+                    known_r = reading[:rl]
+                    kr_is_kata = is_kata(known_r[0])
+                    
                     #If they're not both katakana, convert the non-katakana
                     #to hiragana so we can compare them.
                     if kr_is_kata and not is_kata(r[0]):
@@ -235,74 +257,76 @@ class Solver:
                     elif not kr_is_kata and is_kata(r[0]):
                         r = kata_to_hira(r)
                                        
-                    #Okurigana branch (if it has any)
-                    if len(oku_variants) > 0:
-                        #Try all okurigana variants
-                        for (ov, otag, ovl) in oku_variants:
-        
-                            #Check for matches in the word
-        
-                            #Note: okurigana in the word is always hiragana.
-                            #However, the reading might still have it as katakana.
-                            #If it is, convert the oku variant to katakana as well
-                            #so we can compare them.
-                            if r == known_r and known_oku == ov:
-                                #print r, known_r, known_oku, ov, known_oku_r
-                                if is_kata(known_oku_r) and not is_kata(ov):
-                                    ov = hira_to_kata(ov)
-                                #ALSO check for matches in the reading
-                                if ov == known_oku_r:
-                                    seg = Segment(tag, self.__w_char, cr['reading'], cr['id'],
-                                                  reading[:rl+ol], word[:+1+ovl])
-                                    seg.oku_reading = ov 
-                                    seg.tags.append(otag)
-                                    n_branch = Branch(b, seg)
-                                    self.__branches_at[self.__w_index+1+ovl].append(n_branch)
-                                    self.__usable_branches += 1
-                                    
-                            #try combining okurigana as if it were part of the
-                            #normal reading
-                            comb = r+ov
-                            known_comb = reading[:rl+ol]
-                            if comb == known_comb:
-                                seg = Segment('Combined', self.__w_char,
-                                              cr['reading'], cr['id'],
-                                              reading[:rl+ol], word[:1])
-                                seg.oku_reading = ov 
-                                seg.tags.append('OkuCombined')
-                                n_branch = Branch(b, seg)
-                                self.__branches_at[self.__w_index+1].append(n_branch)
-                                self.__usable_branches += 1
-                                
-                    #No Okurigana branch
-                    else:
-                        #we want a complete match of reading to kanji reading variant
-                        match_length = 0
+#                    #Okurigana branch (if it has any)
+#                    if len(oku_variants) > 0:
+#                        #Try all okurigana variants
+#                        for (ov, otag, ovl) in oku_variants:
+#        
+#                            #Check for matches in the word
+#        
+#                            #Note: okurigana in the word is always hiragana.
+#                            #However, the reading might still have it as katakana.
+#                            #If it is, convert the oku variant to katakana as well
+#                            #so we can compare them.
+#                            if r == known_r and known_oku == ov:
+#                                #print r, known_r, known_oku, ov, known_oku_r
+#                                if is_kata(known_oku_r) and not is_kata(ov):
+#                                    ov = hira_to_kata(ov)
+#                                #ALSO check for matches in the reading
+#                                if ov == known_oku_r:
+#                                    seg = Segment(tag, self.__w_char, cr['reading'], cr['id'],
+#                                                  reading[:rl+ol], word[:+1+ovl])
+#                                    seg.oku_reading = ov 
+#                                    seg.tags.append(otag)
+#                                    n_branch = Branch(b, seg)
+#                                    self.__branches_at[self.__w_index+1+ovl].append(n_branch)
+#                                    self.__usable_branches += 1
+#                                    
+#                            #try combining okurigana as if it were part of the
+#                            #normal reading
+#                            comb = r+ov
+#                            known_comb = reading[:rl+ol]
+#                            if comb == known_comb:
+#                                seg = Segment('Combined', self.__w_char,
+#                                              cr['reading'], cr['id'],
+#                                              reading[:rl+ol], word[:1])
+#                                seg.oku_reading = ov 
+#                                seg.tags.append('OkuCombined')
+#                                n_branch = Branch(b, seg)
+#                                
+#                                self.__branches_at[self.__w_index+1].append(n_branch)
+#                                self.__usable_branches += 1
+#
+#                                
+#                    #No Okurigana branch
+#                    else:
+                    #we want a complete match of reading to kanji reading variant
+                    match_length = 0
+                    
+                    #trailing kana (after kanji) in the word that is part of the reading
+                    w_trail = 0 
+                    for (i, j) in zip(known_r, r):
+                        if i == j:
+                            match_length += 1
+                            #also check ahead for kana in the word that could
+                            #belong to this reading
+                            if w_trail+1 < word_len and word[w_trail + 1] == i:
+                                w_trail += 1
+                    
+                    if match_length == len(r):
+                        seg = Segment(tag, self.__w_char, dic_r, cr['id'],
+                                      reading[:rl], word[:1])
+                        n_branch = Branch(b, seg)
+                        self.__branches_at[self.__w_index+1].append(n_branch)
+                        self.__usable_branches += 1
                         
-                        #trailing kana (after kanji) in the word that is part of the reading
-                        w_trail = 0 
-                        for (i, j) in zip(known_r, r):
-                            if i == j:
-                                match_length += 1
-                                #also check ahead for kana in the word that could
-                                #belong to this reading
-                                if w_trail+1 < word_len and word[w_trail + 1] == i:
-                                    w_trail += 1
-                        
-                        if match_length == len(r):
-                            seg = Segment(tag, self.__w_char, dic_r, cr['id'],
-                                          reading[:rl], word[:1])
+                        if w_trail > 0:
+                            seg = Segment(SegmentTag.KanaTrail, self.__w_char,
+                                          dic_r, cr['id'], reading[:rl],
+                                          word[:1+w_trail])
                             n_branch = Branch(b, seg)
-                            self.__branches_at[self.__w_index+1].append(n_branch)
-                            self.__usable_branches += 1
-                            
-                            if w_trail > 0:
-                                seg = Segment(SegmentTag.KanaTrail, self.__w_char,
-                                              dic_r, cr['id'], reading[:rl],
-                                              word[:1+w_trail])
-                                n_branch = Branch(b, seg)
-                                self.__branches_at[self.__w_index+1+w_trail].append(n_branch)
-                                self.__usable_branches += 1  
+                            self.__branches_at[self.__w_index+1+w_trail].append(n_branch)
+                            self.__usable_branches += 1  
 
 
 if __name__ == "__main__":
@@ -324,7 +348,7 @@ if __name__ == "__main__":
 #    print_verbose(u"結婚", u"けっこん")
 #    print_verbose(u"分別", u"ふんべつ")   
 #    print_verbose(u"刈り入れ人", u"かりいれびと")
-#    print_verbose(u"日帰り", u"ひがえり")        
+    print_all_verbose(u"日帰り", u"ひがえり")        
 #    print_verbose(u"アリドリ科", u"ありどりか")
 #    print_verbose(u"赤鷽", u"アカウソ")
 #    print_verbose(u"重立った", u"おもだった")
@@ -332,15 +356,15 @@ if __name__ == "__main__":
 #    print_verbose(u"働き蟻", u"はたらきあり")
 #    print_verbose(u"往き交い", u"いきかい")    
 #    print_verbose(u"積み卸し", u"つみおろし")
-#    print_verbose(u"包み紙", u"つつみがみ")
+    print_verbose(u"包み紙", u"つつみがみ")
 #    print_verbose(u"守り人", u"もりびと")
-#    print_verbose(u"糶り", u"せり")       
+    print_verbose(u"糶り", u"せり")       
 #    print_verbose(u"バージョン", u"バージョン")
 #    print_verbose(u"シリアルＡＴＡ", u"シリアルエーティーエー")
 #    print_verbose(u"自動金銭出入機", u"じどうきんせんしゅつにゅうき")
 #    print_verbose(u"全国津々浦々", u"ぜんこくつつうらうら")
-#    print_verbose(u"作り茸", u"ツクリタケ")     
-#    print_verbose(u"別荘", u"ベッソウ")
+    print_verbose(u"作り茸", u"ツクリタケ")     
+    print_verbose(u"別荘", u"ベッソウ")
 #    print_verbose(u"守り人", u"モリビト")
 #    print_verbose(u"建て替える", u"タテカエル")
 #    print_verbose(u"一つ", u"ヒトツ")
@@ -350,20 +374,20 @@ if __name__ == "__main__":
 #    
 #    print_verbose(u'先週',u'センシュウ')
 #    print_verbose(u'先週',u'せんしゅう')
-
+#
 #    print_verbose(u'姉さん',u'ネエサン')
 #    print_verbose(u'姉さん',u'ねえさん')
-
+#
 #    print_verbose(u'近寄る',u'チカヨル')
 #    print_verbose(u'近寄る',u'ちかよる')
 #
 #    print_verbose(u'弱気',u'ヨワキ')
 #    print_verbose(u'弱気',u'よわき')
-
+#
 #    print_verbose(u'あの',u'アノ')
 #    print_verbose(u'アノ',u'あの')
 #    print_verbose(u'明かん',u'あかん')
-
+#
 #    print_verbose(u'人となり',u'ひととなり')
 #    print_verbose(u'陰',u'かげ')
 #
@@ -373,8 +397,11 @@ if __name__ == "__main__":
 #    print_verbose(u'コーヒーの木',u'コーヒーのき') 
 #    print_verbose(u'突っ立てる',u'つったてる')
 
-    print_verbose(u'こう言う',u'こうゆう')
-
+#    print_all_verbose(u'駆け巡る',u'かけめぐる')
+#
+#    print_all_verbose(u'偽小切手',u'ぎこぎって')
+#
+#
 #    print_verbose(u'プログラム制御式及びキーボード制御式のアドレス指定可能な記憶域をもつ計算器',
 #                  u'プログラムせいぎょしきおよびキーボードせいぎょしきのアドレスしていかのうなきおくいきをもつけいさんき')
 #   
