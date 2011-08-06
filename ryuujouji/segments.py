@@ -39,8 +39,6 @@ class Segment:
         self.grapheme = grapheme
         #The reading of this segment
         self.reading = reading
-        #The reading of this segment's okurigana as it appears in the word
-        self.oku_reading = None
         #If the segment holds a kanji character (instead of kana)
         self.is_kanji = is_kanji
         

@@ -214,10 +214,10 @@ class Solver:
                 
         for cr in char_readings:
             #print "-- %s --" % cr['reading']
-            (dic_r,s,dic_o) = cr['reading'].partition('.')
+            dic_r = cr['reading']
            
-            r = dic_r #mutable
-            o = dic_o #mutable
+            #r = dic_r #mutable
+            #o = dic_o #mutable
     
             #rl = len(r)  #reading length (non-okurigana portion)
             #ol = len(o)  #okurigana length
@@ -225,12 +225,19 @@ class Solver:
             word = self.word[self.__w_index:]
             word_len = len(word) #so we don't check ahead of it
     
-            variants = get_variants(r, o)
+            
+            variants = get_variants(dic_r)
+            
+#            print "-----" + cr['reading'] + "-----"
+#            for (r, tag, rl) in variants:
+#                print r, tag
+                    
             #oku_variants = get_oku_variants(o)
             
             #The portion of the known word we want to test as okurigana
             #known_oku = word[1:ol+1]
 
+            
             for b in self.__current_branches:
                 r_index = b.next_reading
                 if r_index >= len(self.reading):
@@ -243,9 +250,8 @@ class Solver:
                 #The portion of the known reading we want to test as okurigana
                 #known_oku_r = reading[rl:rl+ol]
                 
-               
+
                 for (r, tag, rl) in variants:
-                    #print r
                     
                     known_r = reading[:rl]
                     kr_is_kata = is_kata(known_r[0])
@@ -328,6 +334,13 @@ class Solver:
                             self.__branches_at[self.__w_index+1+w_trail].append(n_branch)
                             self.__usable_branches += 1  
 
+#                        if (w_trail+1) < len(word) and word[w_trail+1] == u'っ':
+#                            seg = Segment(tag, self.__w_char, dic_r, cr['id'],
+#                            reading[:rl+1], word[:1+w_trail+1])
+#                            n_branch = Branch(b, seg)
+#                            self.__branches_at[self.__w_index+1+w_trail+1].append(n_branch)
+#                            self.__usable_branches += 1
+
 
 if __name__ == "__main__":
 
@@ -348,7 +361,7 @@ if __name__ == "__main__":
 #    print_verbose(u"結婚", u"けっこん")
 #    print_verbose(u"分別", u"ふんべつ")   
 #    print_verbose(u"刈り入れ人", u"かりいれびと")
-    print_all_verbose(u"日帰り", u"ひがえり")        
+#    print_all_verbose(u"日帰り", u"ひがえり")        
 #    print_verbose(u"アリドリ科", u"ありどりか")
 #    print_verbose(u"赤鷽", u"アカウソ")
 #    print_verbose(u"重立った", u"おもだった")
@@ -356,15 +369,15 @@ if __name__ == "__main__":
 #    print_verbose(u"働き蟻", u"はたらきあり")
 #    print_verbose(u"往き交い", u"いきかい")    
 #    print_verbose(u"積み卸し", u"つみおろし")
-    print_verbose(u"包み紙", u"つつみがみ")
+#    print_verbose(u"包み紙", u"つつみがみ")
 #    print_verbose(u"守り人", u"もりびと")
-    print_verbose(u"糶り", u"せり")       
+#    print_verbose(u"糶り", u"せり")       
 #    print_verbose(u"バージョン", u"バージョン")
 #    print_verbose(u"シリアルＡＴＡ", u"シリアルエーティーエー")
 #    print_verbose(u"自動金銭出入機", u"じどうきんせんしゅつにゅうき")
 #    print_verbose(u"全国津々浦々", u"ぜんこくつつうらうら")
-    print_verbose(u"作り茸", u"ツクリタケ")     
-    print_verbose(u"別荘", u"ベッソウ")
+#    print_verbose(u"作り茸", u"ツクリタケ")     
+#    print_verbose(u"別荘", u"ベッソウ")
 #    print_verbose(u"守り人", u"モリビト")
 #    print_verbose(u"建て替える", u"タテカエル")
 #    print_verbose(u"一つ", u"ヒトツ")
@@ -396,8 +409,12 @@ if __name__ == "__main__":
 #    print_verbose(u'高じる',u'こうじる')
 #    print_verbose(u'コーヒーの木',u'コーヒーのき') 
 #    print_verbose(u'突っ立てる',u'つったてる')
-
+#
 #    print_all_verbose(u'駆け巡る',u'かけめぐる')
+    
+#    print_all_verbose(u'真向法',u'まっこうほう')
+    print_all_verbose(u'突掛ける',u'つっかける')
+    
 #
 #    print_all_verbose(u'偽小切手',u'ぎこぎって')
 #
