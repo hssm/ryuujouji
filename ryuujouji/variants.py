@@ -50,22 +50,23 @@ oku_last_char[u'つ'].append((u'っ', SegmentTag.OkuSokuon))
 oku_last_char[u'る'].append((u'', 'RuTrim')) 
 
 def get_variants(dic_reading):
+    base_list = []
     variant_list = []
     (reading, sep, okurigana) = dic_reading.partition('.')
-    
     first = reading[0]
     oku_var_list = get_oku_variants(okurigana)
     
-    #The original reading
-    variant_list.append((reading, SegmentTag.Regular, len(reading)))
+    #The original reading    
+    base_list.append((reading, SegmentTag.Regular, len(reading)))
   
     rl = len(reading)
   
     if first in first_char:
         for (kana, tag) in first_char[first]:
-            new_r = kana+reading[1:] 
+            new_r = kana+reading[1:]
             v = (new_r, tag, rl)
-            variant_list.append(v)
+            base_list.append(v)
+
                
     if is_hira(first):
         soku = u'っ'
@@ -75,22 +76,25 @@ def get_variants(dic_reading):
     tmp_list = []
     
     #add end sokuon to each variant (non-oku so far)
-    for var in variant_list:
+    for var in base_list:
         if len(var[0]) > 1: 
             new_r = var[0][:-1]+soku 
             v = (new_r, 'read_end_sok', rl)
             tmp_list.append(v)
     
-    variant_list.extend(tmp_list)
+    base_list.extend(tmp_list)
+
     
-    tmp_list = []
-    
-    #add every oku variant to every variant from above
-    for (var, tag, rl) in variant_list:
-        for (ovar, otag, ovl) in oku_var_list:
-            v = (var+ovar, 'zzz', len(var+ovar))
-            tmp_list.append(v)
-    variant_list.extend(tmp_list)
+    if len(okurigana) > 0:
+        
+        #add every oku variant to every variant from above
+        for (var, tag, rl) in base_list:
+            for (ovar, otag, ovl) in oku_var_list:
+                v = (var+ovar, 'zzz', len(var+ovar))
+                variant_list.append(v)
+
+    else:
+        variant_list = base_list
     
     return variant_list
 
@@ -111,8 +115,5 @@ def get_oku_variants(okurigana):
                 new_oku = okurigana[:-1]+oku
                 oku_vars.append((new_oku, tag, len(new_oku)))
         
-
-
-
     return oku_vars
                         
