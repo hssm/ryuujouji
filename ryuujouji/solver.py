@@ -174,31 +174,18 @@ class Solver:
             
             if r_index >= len(self.reading):
                 continue
-             
-            word = self.word[self.__w_index:]
-            reading = self.reading[r_index:]
             
-            #r_char = self.reading[r_index]
-            kana_count = 0
-            for (w_char, r_char) in zip(word, reading):
-                if is_kana(w_char):
-                    if is_kata(w_char) and is_hira(r_char):
-                        r_char = hira_to_kata(r_char)
-                    if is_hira(w_char) and is_kata(r_char):
-                        r_char = kata_to_hira(r_char) 
+            r_char = self.reading[r_index]
+            if is_kata(self.__w_char) and is_hira(r_char):
+                r_char = hira_to_kata(r_char)
+            if is_hira(self.__w_char) and is_kata(r_char):
+                r_char = kata_to_hira(r_char) 
         
-                    if w_char == r_char:
-                        kana_count += 1
-                    else:
-                        break
-                else:
-                    break
-
-            if kana_count > 0:
-                s = Segment(None, None, word[:kana_count], 0,
-                            reading[:kana_count], word[:kana_count])
+            if self.__w_char == r_char:
+                s = Segment(None, self.__w_char, self.__w_char, 0,
+                            self.reading[r_index], self.__w_char)
                 n_branch = Branch(branch, s)
-                self.__branches_at[self.__w_index+kana_count].append(n_branch)
+                self.__branches_at[self.__w_index+1].append(n_branch)
                 self.__usable_branches += 1
 
     def __solve_character(self):
@@ -291,62 +278,63 @@ if __name__ == "__main__":
 #    print_verbose(u"一つ", u"ひとつ")
 #    print_verbose(u"別荘", u"べっそう")
 #    print_verbose(u"出席", u"しゅっせき")
-    print_verbose(u"分別", u"ふんべつ")   
-    print_verbose(u"刈り入れ人", u"かりいれびと")
-    print_verbose(u"日帰り", u"ひがえり")        
-    print_verbose(u"アリドリ科", u"ありどりか")
-    print_verbose(u"赤鷽", u"アカウソ")
-    print_verbose(u"重立った", u"おもだった")
-    print_verbose(u"刈り手", u"かりて")
-    print_verbose(u"働き蟻", u"はたらきあり")
-    print_verbose(u"往き交い", u"いきかい")    
-    print_verbose(u"積み卸し", u"つみおろし")
-    print_verbose(u"包み紙", u"つつみがみ")
-    print_verbose(u"守り人", u"もりびと")
-    print_verbose(u"糶り", u"せり")       
-    print_verbose(u"バージョン", u"バージョン")
-    print_verbose(u"シリアルＡＴＡ", u"シリアルエーティーエー")
-    print_verbose(u"自動金銭出入機", u"じどうきんせんしゅつにゅうき")
-    print_verbose(u"全国津々浦々", u"ぜんこくつつうらうら")
-    print_verbose(u"作り茸", u"ツクリタケ")     
-    print_verbose(u"別荘", u"ベッソウ")
-    print_verbose(u"守り人", u"モリビト")
-    print_verbose(u"建て替える", u"タテカエル")
-    print_verbose(u"一つ", u"ヒトツ")
+#    print_verbose(u"分別", u"ふんべつ")   
+#    print_verbose(u"刈り入れ人", u"かりいれびと")
+#    print_verbose(u"日帰り", u"ひがえり")        
+#    print_verbose(u"アリドリ科", u"ありどりか")
+#    print_verbose(u"赤鷽", u"アカウソ")
+#    print_verbose(u"重立った", u"おもだった")
+#    print_verbose(u"刈り手", u"かりて")
+#    print_verbose(u"働き蟻", u"はたらきあり")
+#    print_verbose(u"往き交い", u"いきかい")    
+#    print_verbose(u"積み卸し", u"つみおろし")
+#    print_verbose(u"包み紙", u"つつみがみ")
+#    print_verbose(u"守り人", u"もりびと")
+#    print_verbose(u"糶り", u"せり")       
+#    print_verbose(u"バージョン", u"バージョン")
+#    print_verbose(u"シリアルＡＴＡ", u"シリアルエーティーエー")
+#    print_verbose(u"自動金銭出入機", u"じどうきんせんしゅつにゅうき")
+#    print_verbose(u"全国津々浦々", u"ぜんこくつつうらうら")
+#    print_verbose(u"作り茸", u"ツクリタケ")     
+#    print_verbose(u"別荘", u"ベッソウ")
+#    print_verbose(u"守り人", u"モリビト")
+#    print_verbose(u"建て替える", u"タテカエル")
+#    print_verbose(u"一つ", u"ヒトツ")
+#    
+#    print_verbose(u'先程',u'サキホド')
+#    print_verbose(u'先程',u'さきほど')
+#    
+#    print_verbose(u'先週',u'センシュウ')
+#    print_verbose(u'先週',u'せんしゅう')
+#
+#    print_verbose(u'姉さん',u'ネエサン')
+#    print_verbose(u'姉さん',u'ねえさん')
+#
+#    print_verbose(u'近寄る',u'チカヨル')
+#    print_verbose(u'近寄る',u'ちかよる')
+#
+#    print_verbose(u'弱気',u'ヨワキ')
+#    print_verbose(u'弱気',u'よわき')
+#
+#    print_verbose(u'あの',u'アノ')
+#    print_verbose(u'アノ',u'あの')
+#    print_verbose(u'明かん',u'あかん')
+#
+#    print_verbose(u'人となり',u'ひととなり')
+#    print_verbose(u'陰',u'かげ')
+#
+#    print_verbose(u'寛',u'ゆた')    
+#    
+#    print_verbose(u'高じる',u'こうじる')
+#    print_verbose(u'コーヒーの木',u'コーヒーのき') 
+#    print_verbose(u'突っ立てる',u'つったてる')
+#    print_verbose(u'尽し', u'づくし')
+#    print_verbose(u'引篭り', u'ひきこもり')
+#    print_verbose(u'金詰り',u'かねづまり')
     
-    print_verbose(u'先程',u'サキホド')
-    print_verbose(u'先程',u'さきほど')
-    
-    print_verbose(u'先週',u'センシュウ')
-    print_verbose(u'先週',u'せんしゅう')
-
-    print_verbose(u'姉さん',u'ネエサン')
-    print_verbose(u'姉さん',u'ねえさん')
-
-    print_verbose(u'近寄る',u'チカヨル')
-    print_verbose(u'近寄る',u'ちかよる')
-
-    print_verbose(u'弱気',u'ヨワキ')
-    print_verbose(u'弱気',u'よわき')
-
-    print_verbose(u'あの',u'アノ')
-    print_verbose(u'アノ',u'あの')
-    print_verbose(u'明かん',u'あかん')
-
-    print_verbose(u'人となり',u'ひととなり')
-    print_verbose(u'陰',u'かげ')
-
-    print_verbose(u'寛',u'ゆた')    
-    
-    print_verbose(u'高じる',u'こうじる')
-    print_verbose(u'コーヒーの木',u'コーヒーのき') 
-    print_verbose(u'突っ立てる',u'つったてる')
-    print_verbose(u'尽し', u'づくし')
-    print_verbose(u'引篭り', u'ひきこもり')
-    print_verbose(u'金詰り',u'かねづまり')
-    
-    #using wrong reading
+    #These need ranking
     print_all_verbose(u"結婚", u"けっこん")
+    print_all_verbose(u"退引きならない", u"のっぴきならない")
 
 #    print_all_verbose(u'駆け巡る',u'かけめぐる')
 #    
