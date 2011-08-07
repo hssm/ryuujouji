@@ -104,18 +104,19 @@ def print_solving_stats():
     else:
         percent = 0
     print "There are %s entries in the database. A solution has been found"\
-    " for %s of them. (%d%%)" % (n, nf, percent)   
+    " for %s of them. (%f%%)" % (n, nf, percent)   
 
 
 if __name__ == "__main__":
     dbpath = 'dbs/jmdict_solutions.sqlite'
     
     from word_db import create_db
-#    create_db(dbpath)
+#   create_db(dbpath)
     make_connection(dbpath)
 #    populate_db()
      
-#    print_solving_stats()     
+    print_solving_stats()     
     dry_run()
 
+#There are 159207 entries in the database. A solution has been found for 148395 of them. (93.208841%)
 #There are 159207 entries in the database. A solution has been found for 148388 of them. (93%)

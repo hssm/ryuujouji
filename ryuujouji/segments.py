@@ -14,7 +14,7 @@ class Segment:
     def __init__(self, tags, character, dic_reading, reading_id, reading,
                  grapheme):
         if tags is not None:
-            tags = [tags]
+            tags = tags
             is_kanji = True
         else:
             tags = []

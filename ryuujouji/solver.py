@@ -332,9 +332,11 @@ if __name__ == "__main__":
 #    print_verbose(u'引篭り', u'ひきこもり')
 #    print_verbose(u'金詰り',u'かねづまり')
     
-    #These need ranking
-    print_all_verbose(u"結婚", u"けっこん")
-    print_all_verbose(u"退引きならない", u"のっぴきならない")
+
+#    print_all_verbose(u"結婚", u"けっこん")
+    print_all_verbose(u"黒っぽい", u"くろっぽい")
+    print_all_verbose(u"切戸", u"きれっと")
+
 
 #    print_all_verbose(u'駆け巡る',u'かけめぐる')
 #    
