@@ -125,7 +125,7 @@ def get_oku_variants(okurigana):
         oku_vars.append(v)
 
         #also add variant with っ instead of last char
-        new_oku = okurigana[0][:-1]+u'っ'
+        new_oku = okurigana[:-1]+u'っ'
         v = Variant(new_oku, [SegmentTag.OkuSokuon])
         oku_vars.append(v)
         
