@@ -4,7 +4,6 @@ class SegmentTag:
     Dakuten = 'Dakuten'
     Handakuten = 'Handakuten'
     Sokuon = 'Sokuon'
-    KanaTrail = 'KanaTrail'
     OkuRegular = 'OkuRegular'
     OkuSokuon = 'OkuSokuon'
     OkuInflected = 'OkuInflected'

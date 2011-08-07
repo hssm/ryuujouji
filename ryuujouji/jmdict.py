@@ -115,7 +115,7 @@ if __name__ == "__main__":
     make_connection(dbpath)
 #    populate_db()
      
-    print_solving_stats()     
+#    print_solving_stats()     
     dry_run()
 
 #There are 159207 entries in the database. A solution has been found for 148388 of them. (93%)

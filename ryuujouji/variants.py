@@ -2,6 +2,7 @@
 #Copyright (C) 2011 Houssam Salem <ntsp.gm@gmail.com>
 #License: GPLv3; http://www.gnu.org/licenses/gpl.txt
 
+import copy
 from segments import SegmentTag 
 from tools import is_hira
 
@@ -10,9 +11,16 @@ HAS_DAKUTEN_LIST = list(u'かきくけこたちつてとさしすせそはひふ
 
 HAS_HANDAKUTEN_LIST = list(u'はひふへほハヒフヘホ') 
 
+
+class Variant:
+    
+    def __init__(self, reading, taglist):
+        self.reading = reading      
+        self.length = len(reading)
+        self.tags = taglist
+        
 first_char = {}
 oku_last_char = {}
-
 
 #We know the order we are inserting the dictionary keys, so there is no need
 #to check their existence first.
@@ -47,27 +55,31 @@ oku_last_char[u'つ'] = [(u'ち', tag)]
 
 
 oku_last_char[u'つ'].append((u'っ', SegmentTag.OkuSokuon))
-oku_last_char[u'る'].append((u'', 'RuTrim')) 
+oku_last_char[u'る'].append((u'', SegmentTag.OkuRegular)) 
 
 def get_variants(dic_reading):
+    #Variants we are still building (or building from)
     base_list = []
+    
+    #The final vairant list
     variant_list = []
+    
     (reading, sep, okurigana) = dic_reading.partition('.')
     first = reading[0]
-    oku_var_list = get_oku_variants(okurigana)
+    o_variants = get_oku_variants(okurigana)
     
-    #The original reading    
-    base_list.append((reading, SegmentTag.Regular, len(reading)))
-  
-    rl = len(reading)
-  
+    #The original reading
+    v = Variant(reading, [SegmentTag.Regular])
+    base_list.append(v)
+   
+    #Add all base variants with a change in the first character 
     if first in first_char:
         for (kana, tag) in first_char[first]:
             new_r = kana+reading[1:]
-            v = (new_r, tag, rl)
+            v = Variant(new_r, [tag])
             base_list.append(v)
 
-               
+
     if is_hira(first):
         soku = u'っ'
     else:
@@ -75,22 +87,28 @@ def get_variants(dic_reading):
     
     tmp_list = []
     
-    #add end sokuon to each variant (non-oku so far)
+    #Create more base variants by replacing the last character of the ones
+    #we have so far with a sokuon
     for var in base_list:
-        if len(var[0]) > 1: 
-            new_r = var[0][:-1]+soku 
-            v = (new_r, 'read_end_sok', rl)
+        if len(var.reading) > 1: 
+            new_r = var.reading[:-1]+soku
+            
+            #existing tags of this base variant + the new one
+            tags = copy.copy(var.tags)
+            tags.append(SegmentTag.Sokuon)
+            v = Variant(new_r, tags)
             tmp_list.append(v)
     
     base_list.extend(tmp_list)
 
-    
     if len(okurigana) > 0:
         
         #add every oku variant to every variant from above
-        for (var, tag, rl) in base_list:
-            for (ovar, otag, ovl) in oku_var_list:
-                v = (var+ovar, 'zzz', len(var+ovar))
+        for var in base_list:
+            for ovar in o_variants:
+                tags =  copy.copy(var.tags)
+                tags.extend(ovar.tags)
+                v = Variant(var.reading+ovar.reading, tags)
                 variant_list.append(v)
 
     else:
@@ -103,17 +121,20 @@ def get_oku_variants(okurigana):
     
     if len(okurigana) > 0:
         #Add the original one
-        oku_vars.append((okurigana, SegmentTag.OkuRegular, len(okurigana)))
+        v = Variant(okurigana, [SegmentTag.OkuRegular])
+        oku_vars.append(v)
 
         #also add variant with っ instead of last char
         new_oku = okurigana[0][:-1]+u'っ'
-        oku_vars.append((new_oku, 'test', len(new_oku)))
+        v = Variant(new_oku, [SegmentTag.OkuSokuon])
+        oku_vars.append(v)
         
         oku_last_k = okurigana[-1]
         if oku_last_k in oku_last_char:
             for (oku, tag) in oku_last_char[oku_last_k]:
                 new_oku = okurigana[:-1]+oku
-                oku_vars.append((new_oku, tag, len(new_oku)))
+                v = Variant(new_oku, [tag])
+                oku_vars.append(v)
         
     return oku_vars
                         
