@@ -16,8 +16,7 @@ a little more clearly.
 
 --------------
 Ryuujouji (粒状字) -- granular characters.
-(Alternatively: "I don't actually know Japanese so let's hope this
-isn't laughable nonsense.")
+(Alternatively: "I don't actually know Japanese so let's hope this isn't laughable nonsense.")
 --------------
 Ryuujouji aims to solve two tasks concerning Japanese words:
 
