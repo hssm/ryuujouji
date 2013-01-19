@@ -36,6 +36,17 @@ def print_segments(word, reading):
         for s in segments:
             print "%s %s" % (s.grapheme, s.reading)
 
+def print_segments_to_file(word, reading, out):
+    out.write("%s[%s]\n" % (word, reading))
+    s = Solver(word, reading)
+    segments = s.solution
+
+    if segments is None:
+        out.write('unknown\n')
+    else:
+        for s in segments:
+            out.write("%s %s\n" % (s.grapheme, s.reading))
+
 def print_verbose(word, reading):
     print "%s[%s]" % (word, reading)
     s = Solver(word, reading)
