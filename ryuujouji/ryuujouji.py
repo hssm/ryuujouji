@@ -23,7 +23,7 @@ try:
             s = solver.print_segments(word, reading)
             print
         except ValueError, e:
-            print "Line %d: Cannot parse line -- [%s]" % (i, line)
+            print "Error on line %d: %s: %s" % (i+1, e.message, line)
         
 except KeyboardInterrupt:
     pass
